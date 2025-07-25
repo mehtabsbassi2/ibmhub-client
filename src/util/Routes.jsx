@@ -1,0 +1,9 @@
+export const ASK_NEW_QUESTION = "/profile/ask"
+export const QUESTIONS_PAGE = "/questions"
+export const QUESTION_DEATIL_PAGE =`${QUESTIONS_PAGE}/:id`
+export const LOGIN_PAGE ="/login"
+export const SIGN_UP_PAGE = "/sign-up"
+export const UPDATE_PROFILE ="/update-profile"
+export const PROFILE = "/profile"
+export const DRAFTS = "/drafts"
+export const USER_QUESTIONS = "/user-questions"

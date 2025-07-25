@@ -1,0 +1,48 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+/* @plugin "daisyui"; */
+
+body {
+  font-family: "IBM Plex Sans", sans-serif;
+  background-color: #f4f4f4;
+}
+
+@theme {
+  --color-ibmblue: #1f70c1;
+  --color-ibmlight: #f4f4f4;
+  --color-ibmdark: #0f62fe;
+  --color-ibmborder: #dcdcdc;
+  --color-ibmblack: #364153
+}
+
+/* Heatmap color classes for react-calendar-heatmap */
+.color-empty {
+  fill: #e5e7eb; /* Tailwind gray-200 */
+}
+
+.color-scale-1 {
+  fill: #bfdbfe; /* Tailwind blue-100 */
+}
+
+.color-scale-2 {
+  fill: #60a5fa; /* Tailwind blue-400 */
+}
+
+.color-scale-3 {
+  fill: #3b82f6; /* Tailwind blue-500 */
+}
+
+.color-scale-4 {
+  fill: #1d4ed8; /* Tailwind blue-700 */
+}
+.react-calendar-heatmap text {
+  font-size: 8px;
+  fill: #666; /* optional: reduce brightness for subtle look */
+}
+.react-tooltip {
+  z-index: 9999;
+  font-size: 12px;
+}
+
+
