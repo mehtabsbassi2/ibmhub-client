@@ -113,7 +113,16 @@ const NewQuestionPage = () => {
 
   return (
     <div className="bg-[#f4f7fb] min-h-screen px-4 md:px-10 py-10 text-gray-800">
-      <h1 className="text-3xl font-bold text-ibmblue mb-8 text-left">Ask a Public Question</h1>
+    <div className=' flex justify-between items-center'>
+       <h1 className="text-3xl font-bold text-ibmblue mb-8 text-left">Ask a Public Question</h1>
+        <button
+    onClick={() => {navigate("/questions")}} // Validate and submit
+    className="bg-ibmblue text-white px-6 py-3 rounded-xl font-semibold hover:bg-blue-700 transition-colors"
+  >
+   Go Back
+  </button>
+    </div>
+     
 
       <div className=" mx-auto bg-white border border-gray-200 rounded-2xl shadow p-6 space-y-6">
         {/* Title */}
