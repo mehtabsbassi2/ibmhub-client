@@ -92,7 +92,7 @@ const skillsRef = useRef(null);
     return recs;
   };
 
-  if (!dashboardData) return <div className="p-6">Loading dashboard...</div>;
+  if (!dashboardData) return <div className="flex justify-center p-6"><span className="loading loading-bars loading-xl text-ibmblue"></span></div>;
 
   const { user, recentQuestions, recentAnswers, skills } = dashboardData;
 
