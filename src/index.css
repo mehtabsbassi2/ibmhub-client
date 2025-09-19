@@ -1,7 +1,9 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
-/* @plugin "daisyui"; */
+ @plugin "daisyui" {
+   themes: light --default;
+ }
 
 body {
   font-family: "IBM Plex Sans", sans-serif;
