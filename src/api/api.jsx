@@ -1,7 +1,7 @@
 import axios from "axios";
 
-//const BASE_URL = "http://localhost:5000/api"
-const BASE_URL="https://ibmhub-backend.vercel.app/api"
+// const BASE_URL = "http://localhost:3000/api"
+ const BASE_URL="https://ibmhub-backend.vercel.app/api"
 
 const api = axios.create({
     baseURL:BASE_URL,
@@ -16,6 +16,16 @@ export const createUser = async (payload)=>{
         return res.data
     } catch (error) {
         console.log("Failed to create user",error)
+    }
+}
+
+export const getUsers = async()=>{
+    try {
+        const res = await api.get("/users")
+        return res.data
+    } catch (error) {
+                console.log("Failed to load users",error)
+
     }
 }
 export const getDashboard = async (id)=>{
@@ -176,4 +186,3 @@ export const castVote = async (payload) =>{
         console.log("Failed to cast vote",error)
     }
 }
-
