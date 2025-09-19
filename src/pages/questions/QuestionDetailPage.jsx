@@ -95,7 +95,7 @@ const QuestionDetailPage = () => {
     }
   };
 
-  const handleQuestionSave = async () => {
+  const handleQuestionSave = async (isDraft) => {
     const plain = editContent.replace(/<[^>]+>/g, "").trim();
     if (editTitle.trim().length < 10 || editTitle.trim().length > 150) {
       toastError("Title must be between 10 and 150 characters.");
@@ -116,7 +116,7 @@ const QuestionDetailPage = () => {
         tags: editTags,
         difficulty: editDifficulty,
         content: editContent,
-        status:"published",
+        status: isDraft ? "draft" : "published",
         userId: user.id,
       };
       await updateQuestion(question.id, payload);
@@ -190,7 +190,7 @@ const QuestionDetailPage = () => {
                     const trimmed = newTag.trim();
                     if (
                       trimmed &&
-                      /^[a-zA-Z0-9]+$/.test(trimmed) &&
+                      /^[a-zA-Z0-9+&@#_-]+$/.test(trimmed) &&
                       !editTags.includes(trimmed) &&
                       editTags.length < 5 &&
                       trimmed.length >= 2 &&
@@ -224,11 +224,17 @@ const QuestionDetailPage = () => {
             </div>
 
             <div className="flex justify-end gap-2 py-8">
-              <button
-                onClick={handleQuestionSave}
+               <button
+                onClick={()=>handleQuestionSave(true)}
                 className="bg-ibmblue text-white px-4 py-2 rounded font-semibold"
               >
-                Save
+                Save to draft
+              </button>
+              <button
+                onClick={()=>handleQuestionSave(false)}
+                className="bg-ibmblue text-white px-4 py-2 rounded font-semibold"
+              >
+                Publish
               </button>
               <button
                 onClick={cancelEdit}
@@ -295,7 +301,7 @@ const QuestionDetailPage = () => {
             </span>
           </div>
           }
-          <div>
+          <div className="w-full flex justify-end">
             {user.id === question.authorId && (
               <button
                 onClick={() => {
@@ -305,7 +311,7 @@ const QuestionDetailPage = () => {
                   setEditDifficulty(question.difficulty);
                   setIsEditingQuestion(true);
                 }}
-                className="text-sm text-ibmblue font-medium hover:underline mb-2"
+                className="text-sm text-white bg-ibmblue px-6 py-3 rounded-xl font-medium hover:bg-blue-700 mb-2"
               >
                 Edit Question
               </button>
