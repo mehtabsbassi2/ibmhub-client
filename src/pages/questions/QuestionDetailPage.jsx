@@ -6,6 +6,7 @@ import {
   answerQuestion,
   getQuestionAnswers,
   getQuestionById,
+  getUserTargetRoles,
   markAnswerAsAccepted,
   updateAnswer,
   updateQuestion,
@@ -41,6 +42,24 @@ const QuestionDetailPage = () => {
   const [editAnswerContent, setEditAnswerContent] = useState("");
   const user = useSelector(getAuthUser);
 
+  const [targetRoles, setTargetRoles] = useState([]);
+const [selectedRole, setSelectedRole] = useState("");
+
+// Fetch target roles for logged-in user
+useEffect(() => {
+  const fetchTargetRoles = async () => {
+    try {
+      const res = await getUserTargetRoles(user.id);
+      const data = await res;
+      setTargetRoles(data);
+      if (data.length > 0) setSelectedRole(data[0].id); // default first role
+    } catch (err) {
+      console.error("Failed to fetch target roles", err);
+    }
+  };
+  if (user?.id) fetchTargetRoles();
+}, [user.id]);
+
   useEffect(() => {
     fetchQuestion();
     fetchAnswers();
@@ -65,35 +84,80 @@ const QuestionDetailPage = () => {
     }
   };
 
-  const markAsAccepted = async (id)=>{
-    
-    try {
-      const res = await markAnswerAsAccepted(id)
-      console.log("Clicked",res)
-    } catch (error) {
-      
-    }
+ const markAsAccepted = async (answerId) => {
+  try {
+    await markAnswerAsAccepted(answerId);
+    toastSuccess("Answer marked as accepted!");
+    await fetchQuestion();   // reload question state (is_solved flag, etc.)
+    await fetchAnswers();    // reload answers with updated is_accepted flag
+  } catch (error) {
+    console.error("Failed to mark answer as accepted", error);
+    toastError("Could not mark answer as accepted");
   }
+};
+
+
+  // const handlePostAnswer = async () => {
+  //   const plainText = content.replace(/<[^>]+>/g, "").trim();
+  //   if (plainText.length < 10 || plainText.length > 3000) {
+  //     toastError("Answer must be between 10 and 3000 characters.");
+  //     return;
+  //   }
+  //   if (user.id === question.authorId) {
+  //     toastError("You cannot answer your own question.");
+  //     return;
+  //   }
+  //   try {
+  //     const payload = { authorId: user.id, questionId: id, content };
+  //    const res = await answerQuestion(payload);
+  //    if(res.status === 201){
+  //     toastSuccess("Answer submitted")
+  //     setContent("");
+  //     await fetchQuestion()
+  //    await fetchAnswers();
+  //    }
+      
+  //   } catch (error) {
+  //     console.error("Failed to post answer", error);
+  //   }
+  // };
+
 
   const handlePostAnswer = async () => {
-    const plainText = content.replace(/<[^>]+>/g, "").trim();
-    if (plainText.length < 10 || plainText.length > 3000) {
-      toastError("Answer must be between 10 and 3000 characters.");
-      return;
-    }
-    if (user.id === question.authorId) {
-      toastError("You cannot answer your own question.");
-      return;
-    }
-    try {
-      const payload = { authorId: user.id, questionId: id, content };
-      await answerQuestion(payload);
+  const plainText = content.replace(/<[^>]+>/g, "").trim();
+  if (plainText.length < 10 || plainText.length > 3000) {
+    toastError("Answer must be between 10 and 3000 characters.");
+    return;
+  }
+  if (!selectedRole) {
+    toastError("Please select your target role.");
+    return;
+  }
+  if (user.id === question.authorId) {
+    toastError("You cannot answer your own question.");
+    return;
+  }
+
+  try {
+    const payload = { 
+      authorId: user.id, 
+      questionId: id, 
+      content,
+      targetRoleId: selectedRole 
+    };
+
+    const res = await answerQuestion(payload);
+    if (res.status === 201) {
+      toastSuccess("Answer submitted");
       setContent("");
-      fetchAnswers();
-    } catch (error) {
-      console.error("Failed to post answer", error);
+      setSelectedRole(targetRoles[0]?.id || ""); // reset dropdown
+      await fetchQuestion();
+      await fetchAnswers();
     }
-  };
+  } catch (error) {
+    console.error("Failed to post answer", error);
+  }
+};
 
   const handleQuestionSave = async (isDraft) => {
     const plain = editContent.replace(/<[^>]+>/g, "").trim();
@@ -323,7 +387,7 @@ const QuestionDetailPage = () => {
       {/* Answer Section */}
       {question && question.status === "published" && 
       
-      <div className="mt-12 ">
+      <div className="py-12 ">
         <h2 className="text-xl font-semibold mb-4">
           {answers.length} Answer{answers.length !== 1 ? "s" : ""}
         </h2>
@@ -394,7 +458,7 @@ const QuestionDetailPage = () => {
                   />
                 )}
 
-                <div className="text-sm text-gray-500 flex justify-between flex-wrap gap-2">
+                <div className="text-sm text-gray-500 flex justify-between flex-wrap gap-2 py-3">
                   <div className="flex gap-3 items-center">
                     <span>
                       Answered by <strong className="text-ibmblue">{answer.author?.name}</strong>
@@ -417,7 +481,7 @@ const QuestionDetailPage = () => {
                     {question.authorId === user.id && !answer.is_accepted && (
                       <button
                         onClick={() => markAsAccepted(answer.id)}
-                        className="text-sm text-ibmblue font-medium hover:underline"
+                        className="text-sm text-ibmblue  border rounded p-2 font-medium hover:underline"
                       >
                         Mark as Accepted
                       </button>
@@ -442,21 +506,39 @@ const QuestionDetailPage = () => {
       </div>
       }
 
-      {/* Answer Form */}
-      {user.id !== question.authorId && (
-        <div className="mt-24">
-          <h1 className="text-[24px] py-4 font-semibold">Your answer</h1>
-          <TiptapEditor content={content} onChange={setContent} />
-          <div className="flex justify-end py-4">
-            <button
-              onClick={handlePostAnswer}
-              className="bg-ibmblue text-white px-6 py-2 rounded font-semibold hover:bg-blue-700 transition-colors"
-            >
-              Post your answer
-            </button>
-          </div>
-        </div>
-      )}
+     {/* Answer Form */}
+{user.id !== question.authorId && (
+  <div className="mt-24">
+    <h1 className="text-[24px] py-4 font-semibold">Your answer</h1>
+    <TiptapEditor content={content} onChange={setContent} />
+
+    <div className="mt-6">
+      <label className="block font-semibold mb-2">Select Target Role *</label>
+      <select
+        value={selectedRole}
+        onChange={(e) => setSelectedRole(e.target.value)}
+        className="border border-gray-300 p-3 rounded w-full max-w-md"
+      >
+        <option value="">-- Select a role --</option>
+        {targetRoles.map((role) => (
+          <option key={role.id} value={role.id}>
+            {role.role_name} {role.timeline ? `(${new Date(role.timeline).getFullYear()})` : ""}
+          </option>
+        ))}
+      </select>
+    </div>
+
+    <div className="flex justify-end py-12">
+      <button
+        onClick={handlePostAnswer}
+        className="bg-ibmblue text-white px-6 py-2 rounded font-semibold hover:bg-blue-700 transition-colors"
+      >
+        Post your answer
+      </button>
+    </div>
+  </div>
+)}
+
     </div>
   );
 };
