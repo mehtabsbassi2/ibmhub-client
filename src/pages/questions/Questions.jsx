@@ -17,6 +17,7 @@ const Questions = () => {
   const [tag, setTag] = useState("");
   const [status, setStatus] = useState("all");
   const [userSkills, setUserSkills] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const [sortBy, setSortBy] = useState("newest");
   // const [questions, setQuestions] = useState([]);
@@ -73,6 +74,7 @@ const Questions = () => {
 useEffect(()=>{
   const fetchQuestionByUserSkills = async () =>{
     try {
+      setLoading(true)
       const queryParams = {
           
             search,
@@ -90,7 +92,9 @@ useEffect(()=>{
       console.log("Pagination",pagination)
 
     } catch (error) {
-      
+      setLoading(false)
+    }finally{
+      setLoading(false)
     }
   }
   fetchQuestionByUserSkills()
@@ -187,7 +191,7 @@ useEffect(()=>{
       </div>
 
       {/* Cards */}
-      <div className="w-full space-y-4">
+     {loading ? (<div className="flex justify-center p-6"><span className="loading loading-bars loading-xl text-ibmblue"></span></div>) : <div className="w-full space-y-4">
 
         {Array.isArray(quizes) && quizes.length > 0 ? (
           quizes.map((q) => <QuestionCard key={q.id} question={q} />)
@@ -199,7 +203,8 @@ useEffect(()=>{
             </p>
           </div>
         )}
-      </div>
+      </div>}
+      
       {/* Manual Pagination Controls */}
 {pagination?.totalPages >= 1 && (
   <div className="flex justify-center items-center mt-6 space-x-4">
