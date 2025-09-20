@@ -5,15 +5,25 @@ import { ExternalLink } from "lucide-react";
 
 const ManagerPage = () => {
   const [users, setUsers] = useState([]);
+    const [loading, setLoading] = useState(true);
+  
   const navigate = useNavigate()
   useEffect(() => {
-    const fetchUsers = async () => {
+    try {
+        setLoading(true)
+      const fetchUsers = async () => {
       const res = await getUsers();
       if (Array.isArray(res)) {
         setUsers(res);
       }
     };
-    fetchUsers();
+    fetchUsers();  
+    } catch (error) {
+        setLoading(false)
+    }finally{
+        setLoading(false)
+    }
+    
   }, []);
 
   return (
@@ -22,7 +32,9 @@ const ManagerPage = () => {
         Team Overview
       </h1>
 
-      <div className="overflow-x-auto">
+{loading ? (<div className="flex justify-center p-6">
+          <span className="loading loading-bars loading-xl text-ibmblue"></span>
+        </div>) : <div className="overflow-x-auto">
         <table className="table table-zebra w-full">
           <thead>
             <tr>
@@ -57,7 +69,8 @@ const ManagerPage = () => {
             ))}
           </tbody>
         </table>
-      </div>
+      </div> }
+      
     </div>
   );
 };
