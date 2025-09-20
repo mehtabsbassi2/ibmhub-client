@@ -1,68 +1,75 @@
-import React, { useEffect, useState,useRef } from "react";
-import { useNavigate,useParams } from "react-router-dom";
+import React, { useEffect, useState, useRef } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { getDashboard } from "../../api/api";
 import "react-circular-progressbar/dist/styles.css";
 import { Bar } from "react-chartjs-2";
 import { BarChart2 } from "lucide-react";
 import { TrendingUp, BookText } from "lucide-react";
 import "react-calendar-heatmap/dist/styles.css";
-
 import "react-tooltip/dist/react-tooltip.css";
+
 import CareerProgress from "../home/CareerProgress";
 import ActivityHeatmap from "../home/ActivityHeatmap";
 
 const UserOverviewPage = () => {
-  const {id} = useParams()
+  const { id } = useParams();
   const [dashboardData, setDashboardData] = useState(null);
-  const [qaActivity, setQActivity] = useState([]);
+  const [qaActivity, setQaActivity] = useState([]);
   const [skillset, setSkillset] = useState([]);
   const [recommendations, setRecommendations] = useState([]);
+  const [selectedRole, setSelectedRole] = useState(null);
+
   const navigate = useNavigate();
 
-const careerRef = useRef(null);
-const qaRef = useRef(null);
-const skillsRef = useRef(null);
-
-
-  useEffect(() => {
-  const fetchDashboard = async () => {
-    try {
-      const res = await getDashboard(id);
-      const skills = res.skills || [];
-      setSkillset(skills);
-      setDashboardData(res);
-
-      const activityMap = {};
-      const addActivity = (isoDate) => {
-        const date = isoDate.split("T")[0]; // YYYY-MM-DD
-        activityMap[date] = (activityMap[date] || 0) + 1;
-      };
-
-      res.recentQuestions?.forEach((q) => addActivity(q.createdAt));
-      res.recentAnswers?.forEach((a) => addActivity(a.createdAt));
-
-      const activityData = Object.entries(activityMap).map(([date, count]) => ({
-        date,
-        count,
-      }));
-
-      setQActivity(activityData);
-    } catch (err) {
-      console.error("Failed to fetch dashboard data:", err);
-    }
-  };
-
-  if (id) fetchDashboard();
-}, [id]);
-
-
+  const careerRef = useRef(null);
+  const qaRef = useRef(null);
+  const skillsRef = useRef(null);
 
   useEffect(() => {
-    if (skillset.length || (dashboardData && dashboardData.skills)) {
-      const recs = generateRecommendations(skillset);
+    const fetchDashboard = async () => {
+      try {
+        const res = await getDashboard(id);
+        setDashboardData(res);
+
+        if (res.roles && res.roles.length > 0) {
+          setSelectedRole(res.roles[0]); // default to first role
+          setSkillset(res.roles[0].skills || []);
+        }
+
+        // Build activity map from *all roles’ questions/answers*
+        const activityMap = {};
+        const addActivity = (isoDate) => {
+          const date = isoDate.split("T")[0]; // YYYY-MM-DD
+          activityMap[date] = (activityMap[date] || 0) + 1;
+        };
+
+        res.roles?.forEach((role) => {
+          role.recentQuestions?.forEach((q) => addActivity(q.createdAt));
+          role.recentAnswers?.forEach((a) => addActivity(a.createdAt));
+        });
+
+        const activityData = Object.entries(activityMap).map(([date, count]) => ({
+          date,
+          count,
+        }));
+
+        setQaActivity(activityData);
+      } catch (err) {
+        console.error("Failed to fetch dashboard data:", err);
+      }
+    };
+
+    if (id) fetchDashboard();
+  }, [id]);
+
+  useEffect(() => {
+    if (selectedRole) {
+      setSkillset(selectedRole.skills || []);
+      const recs = generateRecommendations(selectedRole.skills || []);
       setRecommendations(recs);
     }
-  }, [skillset, dashboardData]);
+  }, [selectedRole]);
+
   const generateRecommendations = (skills) => {
     const recs = [];
 
@@ -88,9 +95,16 @@ const skillsRef = useRef(null);
     return recs;
   };
 
-  if (!dashboardData) return <div className="flex justify-center p-6"><span className="loading loading-bars loading-xl text-ibmblue"></span></div>;
+  if (!dashboardData)
+    return (
+      <div className="flex justify-center p-6">
+        <span className="loading loading-bars loading-xl text-ibmblue"></span>
+      </div>
+    );
 
-  const { user, recentQuestions, recentAnswers, skills } = dashboardData;
+  const { user } = dashboardData;
+  const recentQuestions = selectedRole?.recentQuestions || [];
+  const recentAnswers = selectedRole?.recentAnswers || [];
 
   const chartData = {
     labels: skillset.map((s) => s.skill_name),
@@ -104,88 +118,107 @@ const skillsRef = useRef(null);
   };
 
   const chartOptions = {
-  responsive: true,
-  plugins: {
-    legend: { display: false },
-    title: { display: true, text: "Skill Progress Chart" },
-  },
-  scales: {
-    y: {
-      beginAtZero: true,
-      max: 10,
-      ticks: { stepSize: 1 },
-      title: {
-        display: true,
-        text: "Skill Level",
-        font: { size: 14 },
+    responsive: true,
+    plugins: {
+      legend: { display: false },
+      title: { display: true, text: "Skill Progress Chart" },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        max: 10,
+        ticks: { stepSize: 1 },
+        title: {
+          display: true,
+          text: "Skill Level",
+          font: { size: 14 },
+        },
+      },
+      x: {
+        title: {
+          display: true,
+          text: "Skills",
+          font: { size: 14 },
+        },
       },
     },
-    x: {
-      title: {
-        display: true,
-        text: "Skills",
-        font: { size: 14 },
-      },
-    },
-  },
-};
-
+  };
 
   const safeQaActivity = Array.isArray(qaActivity) ? qaActivity : [];
 
   return (
     <div className="space-y-10 p-6 md:p-10 bg-ibmlight min-h-screen">
       {/* 👋 Welcome */}
-        <h1 className="text-3xl font-bold text-ibmblue mb-8 text-left">Overview for {dashboardData.user.name}</h1>
-      {/* ⚡ Quick Actions */}
-      
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold text-ibmblue mb-8 text-left">
+          Overview for {user.name}
+        </h1>
+        <div>
+          <label className="font-medium text-gray-700 mr-2">Select Role:</label>
+          <select
+            className="border border-ibmblue rounded px-4 py-2"
+            value={selectedRole?.id || ""}
+            onChange={(e) => {
+              const role = dashboardData.roles.find(
+                (r) => r.id === Number(e.target.value)
+              );
+              setSelectedRole(role);
+            }}
+          >
+            {dashboardData.roles.map((role) => (
+              <option key={role.id} value={role.id}>
+                {role.role_name}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
 
-      <section className="bg-white rounded-lg  p-6  mt-6 text-xs">
+      {/* 🗓 Activity Heatmap */}
+      <section className="bg-white rounded-lg p-6 mt-6 text-xs">
         <ActivityHeatmap data={safeQaActivity} />
       </section>
 
       {/* 🎯 Career Progress */}
-      <section ref={careerRef} id="career" className=" ">
+      <section ref={careerRef} id="career">
         <div className="flex gap-[20px]">
           <div className="w-full">
-            <CareerProgress user={user} />
+            <CareerProgress user={user} role={selectedRole} />
           </div>
           <div className="w-full">
-<section className="w-full overflow-x-auto h-[100%] bg-white rounded">
-        {/* 📈 Skill Progress Chart */}
-        <div className="w-full  overflow-x-auto p-6">
-          <h2 className="text-lg font-semibold mb-2 text-ibmblue flex items-center gap-2">
-            <TrendingUp size={18} className="text-ibmblue" /> Skill Growth
-          </h2>
-          <Bar className="overflow-x-auto" data={chartData} options={chartOptions} />
-        </div>
-      </section> 
+            <section className="w-full overflow-x-auto h-[100%] bg-white rounded">
+              {/* 📈 Skill Progress Chart */}
+              <div className="w-full overflow-x-auto p-6">
+                <h2 className="text-lg font-semibold mb-2 text-ibmblue flex items-center gap-2">
+                  <TrendingUp size={18} className="text-ibmblue" /> Skill Growth
+                </h2>
+                <Bar data={chartData} options={chartOptions} />
+              </div>
+            </section>
           </div>
-
         </div>
-        
       </section>
 
-       <section>
+      {/* 🔹 Skills */}
+      <section>
         <h2 className="text-lg font-semibold mb-2 flex items-center gap-2">
           <BarChart2 size={18} className="text-ibmblue" /> Skills
         </h2>
         <div className="flex flex-wrap gap-4">
-          {skillset.map((item, index) => (
-            <>
-              <h1 className="capitalize bg-ibmblue rounded px-3 py-1 text-white">
-                {item.skill_name}
-              </h1>
-            </>
+          {skillset.map((item) => (
+            <h1
+              key={item.skill_name}
+              className="capitalize bg-ibmblue rounded px-3 py-1 text-white"
+            >
+              {item.skill_name}
+            </h1>
           ))}
         </div>
       </section>
-      
 
       {/* 📌 Recent Questions & 🗣️ Answers */}
-      <section ref={qaRef} id="qa" className="flex  gap-12">
-        {/* 📌 Recent Questions */}
-        <div className="w-full bg-white p-6 rounded-lg  ">
+      <section ref={qaRef} id="qa" className="flex gap-12">
+        <div className="w-full bg-white p-6 rounded-lg">
           <h2 className="text-lg font-bold text-ibmblue mb-4">
             📌 Recent Questions
           </h2>
@@ -202,21 +235,18 @@ const skillsRef = useRef(null);
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-gray-500">
-              No recent questions
-            </p>
+            <p className="text-sm text-gray-500">No recent questions</p>
           )}
         </div>
 
-        {/* 🗣️ Recent Answers */}
-        <div className="w-full bg-white p-6 rounded-lg  ">
+        <div className="w-full bg-white p-6 rounded-lg">
           <h2 className="text-lg font-bold text-ibmblue mb-4">
             🗣️ Recent Answers
           </h2>
           {recentAnswers.length > 0 ? (
             <ul className="space-y-4">
               {recentAnswers.map((a) => (
-                <li key={a.id} className="text-sm ">
+                <li key={a.id} className="text-sm">
                   <div
                     className="prose prose-sm max-w-none text-gray-800"
                     dangerouslySetInnerHTML={{
@@ -226,7 +256,9 @@ const skillsRef = useRef(null);
                   <div className="text-xs mt-1">
                     on:{" "}
                     <span
-                      onClick={() => navigate(`/questions/${a.question?.id}`)}
+                      onClick={() =>
+                        navigate(`/questions/${a.question?.id}`)
+                      }
                       className="italic text-ibmblue cursor-pointer hover:underline "
                     >
                       {a.question?.title}
@@ -236,18 +268,13 @@ const skillsRef = useRef(null);
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-gray-500">
-              No answered questions yet.
-            </p>
+            <p className="text-sm text-gray-500">No answered questions yet.</p>
           )}
         </div>
-        
       </section>
 
+      {/* 💡 Recommendations */}
       <div className="w-full" ref={skillsRef} id="skills">
-        
-      
-      
         <div>
           <h2 className="text-lg font-semibold mb-2 flex items-center gap-2 mt-8">
             <BookText size={18} className="text-ibmblue" /> Recommendations
@@ -269,15 +296,7 @@ const skillsRef = useRef(null);
             </li>
           </ul>
         </div>
-     
       </div>
-      
-     
-      
-
-      
-
-     
     </div>
   );
 };
