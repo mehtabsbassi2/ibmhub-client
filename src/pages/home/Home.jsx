@@ -12,15 +12,15 @@ import "react-calendar-heatmap/dist/styles.css";
 
 import "react-tooltip/dist/react-tooltip.css";
 import CareerProgress from "./CareerProgress";
-import ActivityHeatmap from "./ActivityHeatmap";
 import { ASK_NEW_QUESTION } from "../../util/Routes";
 
 const Home = () => {
   const profile = useSelector(getProfile);
   const [dashboardData, setDashboardData] = useState(null);
-  const [qaActivity, setQActivity] = useState([]);
   const [skillset, setSkillset] = useState([]);
   const [recommendations, setRecommendations] = useState([]);
+  const [selectedRole, setSelectedRole] = useState(null);
+
   const navigate = useNavigate();
 
 const careerRef = useRef(null);
@@ -29,44 +29,32 @@ const skillsRef = useRef(null);
 
 
   useEffect(() => {
-    const fetchDashboard = async () => {
-      try {
-        const res = await getDashboard(profile.id);
-        const skills = res.skills || [];
-        setSkillset(skills);
-        setDashboardData(res);
+  const fetchDashboard = async () => {
+    try {
+      const res = await getDashboard(profile.id);
+      setDashboardData(res);
 
-        const activityMap = {};
-        const addActivity = (isoDate) => {
-          const date = isoDate.split("T")[0]; // Format: YYYY-MM-DD
-          activityMap[date] = (activityMap[date] || 0) + 1;
-        };
-
-        res.recentQuestions?.forEach((q) => addActivity(q.createdAt));
-        res.recentAnswers?.forEach((a) => addActivity(a.createdAt));
-
-        const activityData = Object.entries(activityMap).map(
-          ([date, count]) => ({
-            date,
-            count,
-          })
-        );
-
-        setQActivity(activityData);
-      } catch (err) {
-        console.error("Failed to fetch dashboard data:", err);
+      if (res.roles && res.roles.length > 0) {
+        setSelectedRole(res.roles[0]); // default to first role
+        setSkillset(res.roles[0].skills || []);
       }
-    };
+    } catch (err) {
+      console.error("Failed to fetch dashboard data:", err);
+    }
+  };
 
-    if (profile?.id) fetchDashboard();
-  }, [profile]);
+  if (profile?.id) fetchDashboard();
+}, [profile]);
+
 
   useEffect(() => {
-    if (skillset.length || (dashboardData && dashboardData.skills)) {
-      const recs = generateRecommendations(skillset);
-      setRecommendations(recs);
-    }
-  }, [skillset, dashboardData]);
+  if (selectedRole) {
+    setSkillset(selectedRole.skills || []);
+    const recs = generateRecommendations(selectedRole.skills || []);
+    setRecommendations(recs);
+  }
+}, [selectedRole]);
+
   const generateRecommendations = (skills) => {
     const recs = [];
 
@@ -94,7 +82,10 @@ const skillsRef = useRef(null);
 
   if (!dashboardData) return <div className="flex justify-center p-6"><span className="loading loading-bars loading-xl text-ibmblue"></span></div>;
 
-  const { user, recentQuestions, recentAnswers, skills } = dashboardData;
+  const { user } = dashboardData;
+const recentQuestions = selectedRole?.recentQuestions || [];
+const recentAnswers = selectedRole?.recentAnswers || [];
+
 
   const chartData = {
     labels: skillset.map((s) => s.skill_name),
@@ -134,14 +125,31 @@ const skillsRef = useRef(null);
   },
 };
 
-
-  const safeQaActivity = Array.isArray(qaActivity) ? qaActivity : [];
-  console.log("Hits", safeQaActivity);
-
   return (
     <div className="space-y-10 p-6 md:p-10 bg-ibmlight min-h-screen">
       {/* 👋 Welcome */}
-      <WelcomeSection />
+      <div className="flex justify-between items-center">
+        <WelcomeSection />
+        <div className="mb-6">
+  <label className="font-medium text-gray-700 mr-2">Select Role:</label>
+  <select
+    className="border border-ibmblue rounded px-4 py-2"
+    value={selectedRole?.id || ""}
+    onChange={(e) => {
+      const role = dashboardData.roles.find(r => r.id === Number(e.target.value));
+      setSelectedRole(role);
+    }}
+  >
+    {dashboardData.roles.map((role) => (
+      <option key={role.id} value={role.id}>
+        {role.role_name}
+      </option>
+    ))}
+  </select>
+</div>
+
+      </div>
+      
 
       {/* ⚡ Quick Actions */}
       <section>
@@ -213,16 +221,11 @@ const skillsRef = useRef(null);
     </a>
   </div>
 </section>
-
-      {/* <section className="bg-white rounded-lg  p-6  mt-6 text-xs">
-        <ActivityHeatmap data={safeQaActivity} />
-      </section> */}
-
       {/* 🎯 Career Progress */}
       <section ref={careerRef} id="career" className=" ">
         <div className="flex gap-[20px]">
           <div className="w-full">
-            <CareerProgress user={user} />
+            <CareerProgress user={user} role={selectedRole} />
           </div>
           <div className="w-full">
 <section className="w-full overflow-x-auto h-[100%] bg-white rounded">
@@ -263,7 +266,7 @@ const skillsRef = useRef(null);
           <h2 className="text-lg font-bold text-ibmblue mb-4">
             📌 Recent Questions in Your Skill Areas
           </h2>
-          {recentQuestions.length > 0 ? (
+          {recentQuestions?.length > 0 ? (
             <ul className="space-y-2">
               {recentQuestions.map((q) => (
                 <li
@@ -287,7 +290,7 @@ const skillsRef = useRef(null);
           <h2 className="text-lg font-bold text-ibmblue mb-4">
             🗣️ Your Recent Answers
           </h2>
-          {recentAnswers.length > 0 ? (
+          {recentAnswers?.length > 0 ? (
             <ul className="space-y-4">
               {recentAnswers.map((a) => (
                 <li key={a.id} className="text-sm ">
@@ -319,9 +322,6 @@ const skillsRef = useRef(null);
       </section>
 
       <div className="w-full" ref={skillsRef} id="skills">
-        
-      
-      
         <div>
           <h2 className="text-lg font-semibold mb-2 flex items-center gap-2 mt-8">
             <BookText size={18} className="text-ibmblue" /> Recommendations
@@ -345,12 +345,6 @@ const skillsRef = useRef(null);
         </div>
      
       </div>
-      
-     
-      
-
-      
-
      
     </div>
   );
