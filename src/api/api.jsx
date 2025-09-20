@@ -1,6 +1,6 @@
 import axios from "axios";
 
-// const BASE_URL = "http://localhost:3000/api"
+//const BASE_URL = "http://localhost:3000/api"
  const BASE_URL="https://ibmhub-backend.vercel.app/api"
 
 const api = axios.create({
@@ -28,6 +28,32 @@ export const getUsers = async()=>{
 
     }
 }
+export const addUserTargetRole = async(data)=>{
+    try {
+        const res = await api.post("/target-roles",data)
+        return res
+    } catch (error) {
+        console.log("Failed to add user roles",error)
+    }
+}
+ export const getUserTargetRoles = async (id)=>{
+    try {
+       const res = await api.get(`/target-roles/${id}`) 
+       return res.data
+    } catch (error) {
+        console.log("Failed to get user roles",error)
+    }
+ }
+
+ export const deleteUserTargetRole = async (id)=>{
+    try {
+        const res = await api.delete(`/target-roles/${id}`)
+        return res
+    } catch (error) {
+        console.log("Failed to delete target roles",error)
+    }
+ }
+
 export const getDashboard = async (id)=>{
     try {
         
@@ -144,7 +170,7 @@ export const updateQuestion = async (id, payload) => {
 export const answerQuestion = async (payload)=>{
     try {
         const res = await api.post("/answers",payload)
-        return res.data
+        return res
     } catch (error) {
         console.log("Failed to post answer",error)
     }
