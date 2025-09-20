@@ -15,10 +15,7 @@ import { useNavigate } from "react-router-dom";
 import {
   Target,
   BarChart2,
-  BookText,
   Brain,
-  ThumbsUp,
-  Check,
   Plus,
   User,
   UserCheck,
@@ -28,13 +25,15 @@ import {
   CalendarClock,
   X,
 } from "lucide-react";
-import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
 import {
   addUserSkills,
+  addUserTargetRole,
   deleteUserSkill,
+  deleteUserTargetRole,
   getDashboard,
   getUserSkills,
+  getUserTargetRoles,
   updateProfile,
 } from "../../api/api";
 import { toastError, toastSuccess } from "../../components/Toastify";
@@ -55,6 +54,12 @@ const Profile = () => {
   const profile = useSelector(getProfile);
   const [skills, setSkills] = useState([]);
   const [loading, setLoading] = useState(true);
+ const [loadRoles, setLoadRoles] = useState(true);
+  const [isAddTargetRole, setIsAddTargetRole] = useState(false);
+  const [targetRoles, setTargetRoles] = useState([]);
+  const [newRole, setNewRole] = useState("");
+  const [newTimeline, setNewTimeline] = useState(null);
+
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
@@ -62,15 +67,15 @@ const Profile = () => {
   const [isAddSkill, setIsAddSkill] = useState(false);
   const [newSkills, setNewSkills] = useState([]);
   const [skillInput, setSkillInput] = useState("");
-    const [qaActivity, setQActivity] = useState([]);
-    console.log("Profile",profile)
-  
+  const [qaActivity, setQActivity] = useState([]);
+const [selectedRoleId, setSelectedRoleId] = useState("");
+
   const [editForm, setEditForm] = useState({
     name: profile.name || "",
     band_level: profile.band_level || "",
     job_title: profile.job_title || "",
     department: profile.department || "",
-    target_role: profile.target_role || "",
+    target_role: targetRoles.length > 0 ? targetRoles[0].role_name : "",
     target_timeline: profile.target_timeline
       ? new Date(profile.target_timeline)
       : null,
@@ -98,6 +103,13 @@ const Profile = () => {
   };
 
   useEffect(() => {
+  if (targetRoles.length > 0 && !editForm.target_role) {
+    setEditForm((prev) => ({ ...prev, target_role: targetRoles[0].role_name }));
+  }
+}, [targetRoles]);
+
+
+  useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
@@ -121,12 +133,10 @@ const Profile = () => {
     ["communication", "leadership"].includes(s.skill_name.toLowerCase())
   );
 
-useEffect(() => {
+  useEffect(() => {
     const fetchDashboard = async () => {
       try {
         const res = await getDashboard(profile.id);
-       
-       
 
         const activityMap = {};
         const addActivity = (isoDate) => {
@@ -153,7 +163,77 @@ useEffect(() => {
     if (profile?.id) fetchDashboard();
   }, [profile]);
 
-const safeQaActivity = Array.isArray(qaActivity) ? qaActivity : [];
+  useEffect(() => {
+    const fetchUserTargetRoles = async () => {
+      try {
+        setLoadRoles(true)
+        const roles = await getUserTargetRoles(profile.id);
+        console.log("Roles", roles);
+        setTargetRoles(roles);
+      } catch (error) {
+        console.error("Error loading target roles", error);
+      }finally{
+        setLoadRoles(false)
+      }
+    };
+
+    if (profile?.id) {
+      fetchUserTargetRoles();
+    }
+  }, [profile?.id]);
+
+  const saveNewRole = async () => {
+    try {
+      const res = await addUserTargetRole({
+        userId: profile.id,
+        role_name: newRole,
+        timeline: newTimeline,
+      });
+      console.log("Res add", res);
+      if (res.status === 201) {
+        toastSuccess("Target role added!");
+        setTargetRoles((prev) => [...prev, res.data]);
+      } else {
+        toastError("Failed to add role.");
+      }
+    } catch (err) {
+      toastError("Something went wrong.");
+    } finally {
+      setIsAddTargetRole(false);
+      setNewRole("");
+      setNewTimeline(null);
+    }
+  };
+
+  const saveSkills = async () => {
+  if (!selectedRoleId) {
+    toastError("Please select a target role first.");
+    return;
+  }
+  try {
+    const res = await addUserSkills({
+      authorId: profile.id,
+      targetRoleId: selectedRoleId,   // ✅ include roleId
+      skillNames: newSkills,
+    });
+    if (res.status === 201) {
+      toastSuccess("Skills added successfully!");
+      const addedSkills = res.data; 
+      setSkills((prev) => [...prev, ...addedSkills]);
+    } else {
+      toastError("Failed to add skills.");
+    }
+  } catch (err) {
+    toastError("Something went wrong.");
+  } finally {
+    setIsAddSkill(false);
+    setNewSkills([]);
+    setSkillInput("");
+    setSelectedRoleId(""); // reset
+  }
+};
+
+  const safeQaActivity = Array.isArray(qaActivity) ? qaActivity : [];
   return (
     <div className="p-6 bg-ibmlight min-h-screen">
       <div className="bg-white p-6 rounded shadow space-y-6">
@@ -205,6 +285,67 @@ const safeQaActivity = Array.isArray(qaActivity) ? qaActivity : [];
           </p>
         </section>
 
+        <section className="mt-6">
+          <div className="flex justify-between items-center pr-10">
+            <h2 className="text-lg font-semibold text-ibmblue flex items-center gap-2">
+              <Target size={18} className="text-ibmblue" /> Target Roles
+            </h2>
+            <Plus
+              size={24}
+              className="text-ibmblue cursor-pointer"
+              onClick={() => setIsAddTargetRole(true)}
+            />
+          </div>
+
+          {loadRoles ? (
+            <div className="flex justify-center p-6"><span className="loading loading-bars loading-xl text-ibmblue"></span></div>)
+             : <div className="bg-white mr-8  rounded-xl  space-y-4 mt-4">
+            {targetRoles.length === 0 ? (
+              <p>No roles set</p>
+            ) : (
+              <ul className="border p-4 rounded-xl border-ibmblue divide-y divide-gray-200">
+                {targetRoles.map((role) => (
+                  <li
+                    key={role.id}
+                    className="flex items-center justify-between py-3 px-1 rounded hover:bg-gray-50 transition"
+                  >
+                    <span className="text-sm font-medium text-gray-700 capitalize">
+                      {role.role_name}{" "}
+                      {role.timeline && (
+                        <span className="text-xs text-gray-500">
+                          (by {new Date(role.timeline).toLocaleDateString()})
+                        </span>
+                      )}
+                    </span>
+                    <button
+                      onClick={async () => {
+                        try {
+                          const res = await deleteUserTargetRole(role.id);
+                          console.log("Deleted Role", res);
+                          if (res.status === 200) {
+                            toastSuccess(res.data.message);
+                            setTargetRoles((prev) =>
+                              prev.filter((r) => r.id !== role.id)
+                            );
+                          } else {
+                            toastError("Delete failed.");
+                          }
+                        } catch (err) {
+                          toastError("Server error.");
+                        }
+                      }}
+                      className="text-red-500 hover:text-red-600 transition"
+                      title="Remove role"
+                    >
+                      <X size={20} />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>}
+        </section>
+
         <div>
           <div className="flex justify-between pr-10">
             <h2 className="text-lg font-semibold text-ibmblue  flex items-center gap-2">
@@ -220,7 +361,7 @@ const safeQaActivity = Array.isArray(qaActivity) ? qaActivity : [];
 
           {/* 🧠 Skill Matrix */}
           {loading ? (
-            <div>Loading</div>
+            <div className="flex justify-center p-6"><span className="loading loading-bars loading-xl text-ibmblue"></span></div>
           ) : (
             <div className="bg-white mr-8 border border-ibmblue rounded-xl  p-4 space-y-4 mt-4">
               <ul className="divide-y divide-gray-200">
@@ -262,12 +403,78 @@ const safeQaActivity = Array.isArray(qaActivity) ? qaActivity : [];
           )}
         </div>
 
-         <section className="bg-white rounded-lg  p-6  mt-6 text-xs">
-        <ActivityHeatmap data={safeQaActivity} />
-      </section>
+        <section className="bg-white rounded-lg  p-6  mt-6 text-xs">
+          <ActivityHeatmap data={safeQaActivity} />
+        </section>
 
         {/* 🗣️ Recent Q&A Activity */}
       </div>
+
+      {isAddTargetRole && (
+        <div className="fixed inset-0 z-50 bg-black/30 flex items-center justify-center">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-ibmblue">
+                Add Target Role
+              </h3>
+              <button
+                onClick={() => setIsAddTargetRole(false)}
+                className="text-gray-500 text-2xl"
+              >
+                &times;
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Role Name
+                </label>
+                <input
+                  type="text"
+                  value={newRole}
+                  onChange={(e) => setNewRole(e.target.value)}
+                  className="w-full border border-gray-300 rounded px-3 py-2"
+                  placeholder="e.g. Senior Developer"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Target Timeline
+                </label>
+                <DatePicker
+                  selected={newTimeline}
+                  onChange={(date) => setNewTimeline(date)}
+                  className="w-full border border-gray-300 rounded px-3 py-2"
+                  placeholderText="Select a target date"
+                  dateFormat="yyyy-MM-dd"
+                  minDate={new Date()}
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4">
+                <button
+                  className="btn"
+                  onClick={() => {
+                    setIsAddTargetRole(false);
+                    setNewRole("");
+                    setNewTimeline(null);
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="btn bg-ibmblue text-white"
+                  onClick={saveNewRole}
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {isEditOpen && (
         <div className="fixed inset-0 z-50 bg-black/30 flex items-center justify-center">
@@ -319,16 +526,23 @@ const safeQaActivity = Array.isArray(qaActivity) ? qaActivity : [];
                   className="w-full flex-1 border border-gray-300 rounded-lg px-3 py-2"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium">Target Role</label>
-                <input
-                  type="text"
-                  name="target_role"
-                  value={editForm.target_role}
-                  onChange={handleEditChange}
-                  className="w-full flex-1 border border-gray-300 rounded-lg px-3 py-2"
-                />
-              </div>
+             <div>
+  <label className="block text-sm font-medium">Target Role</label>
+  <select
+    name="target_role"
+    value={editForm.target_role}
+    onChange={handleEditChange}
+    className="w-full flex-1 border border-gray-300 rounded-lg px-3 py-2"
+  >
+    <option value="">-- Select Target Role --</option>
+    {targetRoles.map((role) => (
+      <option key={role.id} value={role.role_name}>
+        {role.role_name}
+      </option>
+    ))}
+  </select>
+</div>
+
               <div className="flex items-center gap-3">
                 <div className="w-full">
                   <label className="block text-sm font-medium">
@@ -394,6 +608,25 @@ const safeQaActivity = Array.isArray(qaActivity) ? qaActivity : [];
 
             <div className="space-y-4">
               <div>
+                <div>
+  <label className="block text-sm font-medium mb-1">
+    Select Target Role
+  </label>
+  <select
+    value={selectedRoleId}
+    onChange={(e) => setSelectedRoleId(e.target.value)}
+    className="w-full border border-gray-300 rounded px-3 py-2"
+  >
+    <option value="">-- Select a Role --</option>
+    {targetRoles.map((role) => (
+      <option key={role.id} value={role.id}>
+        {role.role_name}
+      </option>
+    ))}
+  </select>
+</div>
+
+
                 <label className="block text-sm font-medium mb-1">
                   Enter Skill
                 </label>
@@ -456,27 +689,7 @@ const safeQaActivity = Array.isArray(qaActivity) ? qaActivity : [];
                 </button>
                 <button
                   className="btn bg-ibmblue text-white"
-                  onClick={async () => {
-                    try {
-                      const res = await addUserSkills({
-                        authorId: profile.id,
-                        skillNames: newSkills,
-                      });
-                      if (res.status === 201) {
-                        toastSuccess("Skills added successfully!");
-                        const addedSkills = res.data; // array of new skill objects
-                        setSkills((prev) => [...prev, ...addedSkills]);
-                      } else {
-                        toastError("Failed to add skills.");
-                      }
-                    } catch (err) {
-                      toastError("Something went wrong.");
-                    } finally {
-                      setIsAddSkill(false);
-                      setNewSkills([]);
-                      setSkillInput("");
-                    }
-                  }}
+                  onClick={saveSkills}
                 >
                   Save
                 </button>
