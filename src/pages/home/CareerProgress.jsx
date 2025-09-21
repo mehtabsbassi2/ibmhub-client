@@ -1,20 +1,17 @@
 import React from "react";
 import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
-import { Briefcase, TrendingUp, Rocket } from "lucide-react";
+import { Briefcase, Rocket } from "lucide-react";
 import { formatDistanceToNowStrict, parseISO, isBefore } from "date-fns";
-
 
 const CareerProgress = ({ user, role }) => {
   const getProgressStages = (points) => {
     const stage1Max = 250;
-    const stage2Max = 375;
-    const stage3Max = 500;
+    const stage2Max = 500; // jump straight to target
 
     const circle1 = Math.min((points / stage1Max) * 100, 100);
     const circle2 = points <= stage1Max ? 0 : Math.min(((points - stage1Max) / (stage2Max - stage1Max)) * 100, 100);
-    const circle3 = points <= stage2Max ? 0 : Math.min(((points - stage2Max) / (stage3Max - stage2Max)) * 100, 100);
 
-    return [circle1, circle2, circle3];
+    return [circle1, circle2];
   };
 
   const getTimeLeft = (targetDateStr) => {
@@ -28,7 +25,7 @@ const CareerProgress = ({ user, role }) => {
   if (!role) return null;
 
   const timeLeft = getTimeLeft(role.timeline);
-  const [circle1, circle2, circle3] = getProgressStages(role.rolePoints);
+  const [circle1, circle2] = getProgressStages(role.rolePoints);
 
   return (
     <section className="bg-white p-6 rounded h-[100%]">
@@ -39,7 +36,7 @@ const CareerProgress = ({ user, role }) => {
       </p>
 
       <div className="w-full flex items-center justify-center gap-1 mt-6">
-        {[ 
+        {[
           {
             label: user.job_title,
             color: "#1f70c1",
@@ -49,25 +46,20 @@ const CareerProgress = ({ user, role }) => {
             range: "0–250 pts",
           },
           {
-            label: "Mid Level",
-            color: "#016630",
-            icon: <TrendingUp size={24} className="text-green-800" />,
-            value: circle2,
-            text: role.rolePoints >= 250 ? `${role.rolePoints}%` : "0%",
-            range: "250–375 pts",
-          },
-          {
             label: role.role_name,
             color: "#7e2a0c",
             icon: <Rocket size={24} className="text-orange-900" />,
-            value: circle3,
-            text: role.rolePoints >= 375 ? `${role.rolePoints}%` : "0%",
-            range: "375–500 pts",
+            value: circle2,
+            text: role.rolePoints >= 250 ? `${role.rolePoints}%` : "0%",
+            range: "250–500 pts",
           },
         ].map((stage, idx) => (
           <React.Fragment key={idx}>
             <div className="w-full flex flex-col items-center space-y-1">
-              <h1 className="rounded text-white text-sm px-1" style={{ background: stage.color }}>
+              <h1
+                className="rounded text-white text-sm px-1"
+                style={{ background: stage.color }}
+              >
                 {stage.label}
               </h1>
               <div className="w-[130px] h-[130px] relative">
@@ -87,13 +79,14 @@ const CareerProgress = ({ user, role }) => {
               </div>
               <span className="text-xs text-gray-600">{stage.range}</span>
             </div>
-            {idx < 2 && <div className="h-1 w-full rounded" style={{ background: stage.color }} />}
+            {idx < 1 && (
+              <div className="h-1 w-full rounded" style={{ background: stage.color }} />
+            )}
           </React.Fragment>
         ))}
       </div>
     </section>
   );
 };
-
 
 export default CareerProgress;
