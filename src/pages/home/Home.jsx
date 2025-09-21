@@ -247,15 +247,10 @@ const recentAnswers = selectedRole?.recentAnswers || [];
         <h2 className="text-lg font-semibold mb-2 flex items-center gap-2">
           <BarChart2 size={18} className="text-ibmblue" /> Skills
         </h2>
-        <div className="flex flex-wrap gap-4">
-          {skillset.map((item, index) => (
-            <>
-              <h1 className="capitalize bg-ibmblue rounded px-3 py-1 text-white">
-                {item.skill_name}
-              </h1>
-            </>
-          ))}
-        </div>
+       <p className="text-gray-700 text-xl capitalize">
+  {skillset.map((item) => item.skill_name).join(", ")}
+</p>
+
       </section>
       
 
