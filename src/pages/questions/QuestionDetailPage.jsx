@@ -508,16 +508,18 @@ useEffect(() => {
 
      {/* Answer Form */}
 {user.id !== question.authorId && (
-  <div className="mt-24">
-    <h1 className="text-[24px] py-4 font-semibold">Your answer</h1>
-    <TiptapEditor content={content} onChange={setContent} />
-
-    <div className="mt-6">
+  <div className="pb-12">
+     <div className="mt-6">
+      <p className="text-gray-600 text-sm mb-2">
+        Selecting a target role helps us track your answers against the skills
+        required for your career path. This ensures your progress is linked
+        to the role you’re working towards.
+      </p>
       <label className="block font-semibold mb-2">Select Target Role *</label>
       <select
         value={selectedRole}
         onChange={(e) => setSelectedRole(e.target.value)}
-        className="border border-gray-300 p-3 rounded w-full max-w-md"
+        className="border border-ibmblue p-3 rounded w-full max-w-md"
       >
         <option value="">-- Select a role --</option>
         {targetRoles.map((role) => (
@@ -527,8 +529,12 @@ useEffect(() => {
         ))}
       </select>
     </div>
+    <h1 className="text-[24px] py-4 font-semibold">Your answer</h1>
+    <TiptapEditor content={content} onChange={setContent} />
 
-    <div className="flex justify-end py-12">
+   
+
+    <div className="flex justify-end mt-12">
       <button
         onClick={handlePostAnswer}
         className="bg-ibmblue text-white px-6 py-2 rounded font-semibold hover:bg-blue-700 transition-colors"
