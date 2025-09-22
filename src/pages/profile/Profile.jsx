@@ -347,61 +347,68 @@ const [selectedRoleId, setSelectedRoleId] = useState("");
         </section>
 
         <div>
-          <div className="flex justify-between pr-10">
-            <h2 className="text-lg font-semibold text-ibmblue  flex items-center gap-2">
-              <Brain size={18} className="text-ibmblue" /> Skills Matrix
-            </h2>
-            {/* //change this icon to add */}
-            <Plus
-              size={24}
-              className="text-ibmblue cursor-pointer"
-              onClick={() => setIsAddSkill(true)}
-            />
-          </div>
+  <div className="flex justify-between pr-10">
+    <h2 className="text-lg font-semibold text-ibmblue flex items-center gap-2">
+      <Brain size={18} className="text-ibmblue" /> Skills Matrix
+    </h2>
+    <Plus
+      size={24}
+      className="text-ibmblue cursor-pointer"
+      onClick={() => setIsAddSkill(true)}
+    />
+  </div>
 
-          {/* 🧠 Skill Matrix */}
-          {loading ? (
-            <div className="flex justify-center p-6"><span className="loading loading-bars loading-xl text-ibmblue"></span></div>
-          ) : (
-            <div className="bg-white mr-8 border border-ibmblue rounded-xl  p-4 space-y-4 mt-4">
-              <ul className="divide-y divide-gray-200">
-                {[...technicalSkills, ...softSkills].map((skill) => (
-                  <li
-                    key={skill.skill_name}
-                    className="flex items-center justify-between py-3 px-1 rounded hover:bg-gray-50 transition"
-                  >
-                    <span className="text-sm font-medium text-gray-700 capitalize">
-                      {skill.skill_name}
-                    </span>
-                    <button
-                      onClick={async () => {
-                        try {
-                          const res = await deleteUserSkill(skill.id);
-                          if (res.status === 200) {
-                            toastSuccess(res.data.message);
-                            setSkills((prev) =>
-                              prev.filter(
-                                (s) => s.skill_name !== skill.skill_name
-                              )
-                            );
-                          } else {
-                            toastError("Delete failed.");
-                          }
-                        } catch (err) {
-                          toastError("Server error.");
-                        }
-                      }}
-                      className="text-red-500 hover:text-red-600 transition"
-                      title="Remove skill"
-                    >
-                      <X size={20} />
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+  {/* Show list only when there are skills */}
+  {(technicalSkills.length > 0 || softSkills.length > 0) && (
+    <>
+      {loading ? (
+        <div className="flex justify-center p-6">
+          <span className="loading loading-bars loading-xl text-ibmblue"></span>
         </div>
+      ) : (
+        <div className="bg-white mr-8 border border-ibmblue rounded-xl p-4 space-y-4 mt-4">
+          <ul className="divide-y divide-gray-200">
+            {[...technicalSkills, ...softSkills].map((skill) => (
+              <li
+                key={skill.skill_name}
+                className="flex items-center justify-between py-3 px-1 rounded hover:bg-gray-50 transition"
+              >
+                <span className="text-sm font-medium text-gray-700 capitalize">
+                  {skill.skill_name}
+                </span>
+                <button
+                  onClick={async () => {
+                    try {
+                      const res = await deleteUserSkill(skill.id);
+                      if (res.status === 200) {
+                        toastSuccess(res.data.message);
+                        setSkills((prev) =>
+                          prev.filter(
+                            (s) => s.skill_name !== skill.skill_name
+                          )
+                        );
+                      } else {
+                        toastError("Delete failed.");
+                      }
+                    } catch (err) {
+                      toastError("Server error.");
+                    }
+                  }}
+                  className="text-red-500 hover:text-red-600 transition"
+                  title="Remove skill"
+                >
+                  <X size={20} />
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </>
+  )}
+</div>
+
+
 
         <section className="bg-white rounded-lg  p-6  mt-6 text-xs">
           <ActivityHeatmap data={safeQaActivity} />
