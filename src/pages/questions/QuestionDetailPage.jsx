@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams,useNavigate } from "react-router-dom";
 import { formatDistanceToNow, differenceInHours } from "date-fns";
 import TiptapEditor from "../../components/tipTap/TiptapEditor";
 import {
@@ -23,9 +23,9 @@ import {
   X,
 } from "lucide-react";
 import { toastError, toastSuccess } from "../../components/Toastify";
+import { QUESTIONS_PAGE } from "../../util/Routes";
 
 const difficultyOptions = ["Junior", "Mid", "Senior"];
-
 const QuestionDetailPage = () => {
   const { id } = useParams();
   const [question, setQuestion] = useState(null);
@@ -44,6 +44,7 @@ const QuestionDetailPage = () => {
 
   const [targetRoles, setTargetRoles] = useState([]);
 const [selectedRole, setSelectedRole] = useState("");
+const navigate = useNavigate()
 
 // Fetch target roles for logged-in user
 useEffect(() => {
@@ -204,6 +205,10 @@ useEffect(() => {
 
   return (
     <div className="bg-ibmlight  w-[calc(100vw-350px)] min-h-screen font-sans">
+              <div className="flex justify-between items-center pb-4"><h1 className="text-xl font-bold text-ibmblue">{isEditingQuestion ? "Editing Question" : "Questions Details"}</h1>
+              <button onClick={()=>navigate(QUESTIONS_PAGE)} className="border border-ibmblue btn-outline text-ibmblue cursor-pointer px-4 py-1 rounded">Back</button>
+              </div>
+
       <div className="w-full bg-white p-6 rounded-lg shadow border border-gray-200 ">
         {isEditingQuestion ? (
           <>
