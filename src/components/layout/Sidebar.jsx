@@ -23,7 +23,7 @@ const Sidebar = () => {
   // Conditionally push Users Overview if ADMIN
   if (profile?.accountType === "ADMIN") {
     navLinks.push({
-      name: "Users Overview",
+      name: "Manager Dashboard",
       path: MANAGER,
       icon: <FaUsers size={20} />,
     });
