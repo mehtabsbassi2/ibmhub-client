@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import { getProfile } from "../../redux/userSlice";
 import { getUserDraftQuestions } from "../../api/api";
 import {
@@ -7,6 +8,7 @@ import {
   setDraftQuestions,
 } from "../../redux/questionSlice";
 import QuestionCard from "../questions/QuestionCard.";
+import { QUESTIONS_PAGE } from "../../util/Routes";
 
 const QuestionDrafts = () => {
   const [search, setSearch] = useState("");
@@ -23,7 +25,7 @@ const QuestionDrafts = () => {
   const profile = useSelector(getProfile);
   const dispatch = useDispatch();
   const quizes = useSelector(getDraftQuestions);
-
+const navigate = useNavigate()
   useEffect(() => {
     const fetchQuestionByUserSkills = async () => {
       try {
@@ -55,7 +57,12 @@ const QuestionDrafts = () => {
     fetchQuestionByUserSkills();
   }, [profile?.id, search, difficulty, tag, status, sortBy, currentPage]);
   return (
-    <div>
+    <div className=" w-[calc(100vw-350px)]">
+              <div className="flex justify-between items-center pb-4"><h1 className="text-xl font-bold text-ibmblue ">Draft Questions</h1>
+                            <button onClick={()=>navigate(QUESTIONS_PAGE)} className="border border-ibmblue btn-outline text-ibmblue cursor-pointer px-4 py-1 rounded">Back</button>
+              
+              </div>
+
       {/* Cards */}
       {loading ? (
         <div className="flex justify-center p-6">
