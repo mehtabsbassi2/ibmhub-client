@@ -243,15 +243,7 @@ const recentAnswers = selectedRole?.recentAnswers || [];
         
       </section>
 
-       <section>
-        <h2 className="text-lg font-semibold mb-2 flex items-center gap-2">
-          <BarChart2 size={18} className="text-ibmblue" /> Skills
-        </h2>
-       <p className="text-gray-700 text-xl capitalize">
-  {skillset.map((item) => item.skill_name).join(", ")}
-</p>
-
-      </section>
+      
       
 
       {/* 📌 Recent Questions & 🗣️ Answers */}
