@@ -25,7 +25,7 @@ const QuestionDrafts = () => {
   const profile = useSelector(getProfile);
   const dispatch = useDispatch();
   const quizes = useSelector(getDraftQuestions);
-const navigate = useNavigate()
+  const navigate = useNavigate();
   useEffect(() => {
     const fetchQuestionByUserSkills = async () => {
       try {
@@ -58,10 +58,15 @@ const navigate = useNavigate()
   }, [profile?.id, search, difficulty, tag, status, sortBy, currentPage]);
   return (
     <div className=" w-[calc(100vw-350px)]">
-              <div className="flex justify-between items-center pb-4"><h1 className="text-xl font-bold text-ibmblue ">Draft Questions</h1>
-                            <button onClick={()=>navigate(QUESTIONS_PAGE)} className="border border-ibmblue btn-outline text-ibmblue cursor-pointer px-4 py-1 rounded">Back</button>
-              
-              </div>
+      <div className="flex justify-between items-center pb-4">
+        <h1 className="text-xl font-bold text-ibmblue ">Draft Questions</h1>
+        <button
+          onClick={() => navigate(QUESTIONS_PAGE)}
+          className="border border-ibmblue btn-outline text-ibmblue cursor-pointer px-4 py-1 rounded"
+        >
+          Back
+        </button>
+      </div>
 
       {/* Cards */}
       {loading ? (
@@ -71,7 +76,9 @@ const navigate = useNavigate()
       ) : (
         <div className=" w-[calc(100vw-350px)] space-y-4">
           {Array.isArray(quizes) && quizes.length > 0 ? (
-            quizes.map((q) => <QuestionCard key={q.id} question={q} />)
+            quizes.map((q) => (
+              <QuestionCard key={q.id} question={q} isDraft={true} />
+            ))
           ) : (
             <div className="text-center text-gray-500 mt-10">
               <p className="text-lg">No questions found.</p>
