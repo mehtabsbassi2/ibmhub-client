@@ -6,7 +6,7 @@ export const SIGN_UP_PAGE = "/sign-up"
 export const UPDATE_PROFILE ="/update-profile"
 export const PROFILE = "/profile"
 export const DRAFTS = "/drafts"
-
 export const USER_QUESTIONS = "/user-questions"
 export const MANAGER = "/users/admin"
 export const USER_OVERVIEW ="/users/admin/:id"
+export const NEW_USER ="/users/create"
