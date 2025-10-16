@@ -212,3 +212,43 @@ export const castVote = async (payload) =>{
         console.log("Failed to cast vote",error)
     }
 }
+
+export const addUserToAdmin = async (payload)=>{
+    try {
+        const res = await api.post('/admin-users/add',payload)
+        console.log("RES",res)
+        return res.data
+    } catch (error) {
+      console.log("Failed add user to admin",error)  
+    }
+}
+
+export const RemoveUserToAdmin = async (payload)=>{
+    try {
+        const res = await api.delete('/admin-users/remove',{data:payload})
+        return res.data
+    } catch (error) {
+      console.log("Failed add user to admin",error)  
+    }
+}
+
+export const getUsersForadmin = async (adminId)=>{
+    try {
+        const res = await api.get(`/admin-users/admin/${adminId}/users`)
+        return res.data
+    } catch (error) {
+             console.log("Failed to get admin users",error)  
+ 
+    }
+}
+
+export const getAvailableUsersForAdmin = async (adminId) => {
+  try {
+    const res = await api.get(`/admin-users/available/${adminId}`);
+    return res.data;
+  } catch (error) {
+    console.error("Failed to fetch available users:", error);
+    throw error;
+  }
+};
+
