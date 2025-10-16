@@ -33,6 +33,7 @@ const Questions = () => {
 
   useEffect(() => {
     const fetchQuestions = async () => {
+      setLoading(true)
       try {
         const params = {
           params: {
@@ -45,6 +46,7 @@ const Questions = () => {
           },
         };
         const res = await getQuestions(params);
+        console.log("Res",res)
         dispatch(setQuestions(res.data.questions || []));
               setPagination(res.data.pagination);
 
@@ -53,11 +55,14 @@ const Questions = () => {
 
       } catch (error) {
         console.error("Error fetching questions:", error);
+        setLoading(false)
+      }finally{
+        setLoading(false)
       }
     };
 
-    //fetchQuestions();
-  }, [search, difficulty, tag, status, sortBy,currentPage]);
+    fetchQuestions();
+  }, [ search, difficulty, tag, status, sortBy, currentPage]);
   useEffect(()=>{
     const getSkills = async ()=>{
       try {
@@ -97,7 +102,7 @@ useEffect(()=>{
       setLoading(false)
     }
   }
-  fetchQuestionByUserSkills()
+  //fetchQuestionByUserSkills()
 },[profile?.id, search, difficulty, tag, status, sortBy, currentPage])
 
   const handleAsk = () =>{
@@ -148,7 +153,7 @@ useEffect(()=>{
             <option value="Senior">Senior</option>
           </select>
 
-          <select
+          {/* <select
   value={tag}
   onChange={(e) => setTag(e.target.value)}
   className="border border-gray-300 rounded px-3 py-2"
@@ -159,7 +164,7 @@ useEffect(()=>{
       {skill.skill_name.charAt(0).toUpperCase() + skill.skill_name.slice(1)}
     </option>
   ))}
-</select>
+</select> */}
 
 
           <select
