@@ -252,4 +252,15 @@ export const getAvailableUsersForAdmin = async (adminId) => {
   }
 };
 
+export const getUserTargetRolesWithUserSkills = async (userId)=>{
+    try {
+        const res = await api.get(`/target-roles/${userId}/roles-with-skills`)
+        return res.data;
+    } catch (error) {
+           console.error("Failed to load user skills:", error);
+    throw error;
+    }
+}
+
+
 
