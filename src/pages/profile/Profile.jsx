@@ -24,6 +24,7 @@ import {
   Building2,
   CalendarClock,
   X,
+  ChevronDown, ChevronUp
 } from "lucide-react";
 import "react-circular-progressbar/dist/styles.css";
 import {
@@ -34,6 +35,7 @@ import {
   getDashboard,
   getUserSkills,
   getUserTargetRoles,
+  getUserTargetRolesWithUserSkills,
   updateProfile,
 } from "../../api/api";
 import { toastError, toastSuccess } from "../../components/Toastify";
@@ -69,6 +71,10 @@ const Profile = () => {
   const [skillInput, setSkillInput] = useState("");
   const [qaActivity, setQActivity] = useState([]);
 const [selectedRoleId, setSelectedRoleId] = useState("");
+const [rolesWithSkills, setRolesWithSkills] = useState([]);
+const [loadingRolesWithSkills, setLoadingRolesWithSkills] = useState(true);
+const [expandedRoleId, setExpandedRoleId] = useState(null);
+
 
   const [editForm, setEditForm] = useState({
     name: profile.name || "",
@@ -108,23 +114,43 @@ const [selectedRoleId, setSelectedRoleId] = useState("");
   }
 }, [targetRoles]);
 
+const refetchRolesWithSkills = async () => {
+  try {
+    setLoadingRolesWithSkills(true);
+    const data = await getUserTargetRolesWithUserSkills(profile.id);
+    setRolesWithSkills(data);
+  } catch (err) {
+    console.error("Error refreshing roles with skills:", err);
+  } finally {
+    setLoadingRolesWithSkills(false);
+  }
+};
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const response = await getUserSkills(profile.id);
-        const skills = response || [];
-        setSkills(skills);
-      } catch (err) {
-        console.error("Failed to load career data", err);
-      } finally {
-        setLoading(false);
-      }
-    };
 
-    if (profile?.id) fetchData();
-  }, [profile]);
+const daysUntil = (date) => {
+  if (!date) return null;
+  const today = new Date();
+  const diffTime = date - today;
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+};
+
+
+  // useEffect(() => {
+  //   const fetchData = async () => {
+  //     try {
+  //       setLoading(true);
+  //       const response = await getUserSkills(profile.id);
+  //       const skills = response || [];
+  //       setSkills(skills);
+  //     } catch (err) {
+  //       console.error("Failed to load career data", err);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+
+  //   if (profile?.id) fetchData();
+  // }, [profile]);
 
   const technicalSkills = skills.filter(
     (s) => !["communication", "leadership"].includes(s.skill_name.toLowerCase())
@@ -162,6 +188,25 @@ const [selectedRoleId, setSelectedRoleId] = useState("");
 
     if (profile?.id) fetchDashboard();
   }, [profile]);
+
+
+  useEffect(() => {
+  const fetchRolesWithSkills = async () => {
+    try {
+      setLoadingRolesWithSkills(true);
+      const data = await getUserTargetRolesWithUserSkills(profile.id);
+      console.log("Roles with skills:", data);
+      setRolesWithSkills(data);
+    } catch (err) {
+      console.error("Error loading roles with skills:", err);
+    } finally {
+      setLoadingRolesWithSkills(false);
+    }
+  };
+
+  if (profile?.id) fetchRolesWithSkills();
+}, [profile?.id]);
+
 
   useEffect(() => {
     const fetchUserTargetRoles = async () => {
@@ -213,13 +258,12 @@ const [selectedRoleId, setSelectedRoleId] = useState("");
   try {
     const res = await addUserSkills({
       authorId: profile.id,
-      targetRoleId: selectedRoleId,   // ✅ include roleId
+      targetRoleId: selectedRoleId,
       skillNames: newSkills,
     });
     if (res.status === 201) {
       toastSuccess("Skills added successfully!");
-      const addedSkills = res.data; 
-      setSkills((prev) => [...prev, ...addedSkills]);
+      await refetchRolesWithSkills(); // ✅ Refresh from backend
     } else {
       toastError("Failed to add skills.");
     }
@@ -229,9 +273,10 @@ const [selectedRoleId, setSelectedRoleId] = useState("");
     setIsAddSkill(false);
     setNewSkills([]);
     setSkillInput("");
-    setSelectedRoleId(""); // reset
+    setSelectedRoleId("");
   }
 };
+
 
   const safeQaActivity = Array.isArray(qaActivity) ? qaActivity : [];
   return (
@@ -346,67 +391,107 @@ const [selectedRoleId, setSelectedRoleId] = useState("");
           </div>}
         </section>
 
-        <div>
-  <div className="flex justify-between pr-10">
+        
+
+{/* 🎯 Target Roles with Skills Section */}
+<section className="mt-8">
+  <div className="flex justify-between items-center pr-10">
     <h2 className="text-lg font-semibold text-ibmblue flex items-center gap-2">
-      <Brain size={18} className="text-ibmblue" /> Skills Matrix
+      <Target size={18} className="text-ibmblue" /> Target Roles with Skills
     </h2>
-    <Plus
-      size={24}
-      className="text-ibmblue cursor-pointer"
-      onClick={() => setIsAddSkill(true)}
-    />
   </div>
 
-  {/* Show list only when there are skills */}
-  {(technicalSkills.length > 0 || softSkills.length > 0) && (
-    <>
-      {loading ? (
-        <div className="flex justify-center p-6">
-          <span className="loading loading-bars loading-xl text-ibmblue"></span>
-        </div>
-      ) : (
-        <div className="bg-white mr-8 border border-ibmblue rounded-xl p-4 space-y-4 mt-4">
-          <ul className="divide-y divide-gray-200">
-            {[...technicalSkills, ...softSkills].map((skill) => (
-              <li
-                key={skill.skill_name}
-                className="flex items-center justify-between py-3 px-1 rounded hover:bg-gray-50 transition"
-              >
-                <span className="text-sm font-medium text-gray-700 capitalize">
-                  {skill.skill_name}
+  {loadingRolesWithSkills ? (
+    <div className="flex justify-center p-6">
+      <span className="loading loading-bars loading-xl text-ibmblue"></span>
+    </div>
+  ) : rolesWithSkills.length === 0 ? (
+    <p className="text-gray-500 mt-2">No target roles with skills yet.</p>
+  ) : (
+    <div className="mt-4 bg-white border border-ibmblue rounded-xl p-4 space-y-4 mr-8">
+      {rolesWithSkills.map((role) => (
+        <div key={role.role_id} className="border border-gray-200 rounded-lg">
+          {/* Accordion Header */}
+          <div
+            className="flex items-center justify-between p-3 cursor-pointer bg-gray-50 hover:bg-gray-100 rounded-t-lg transition"
+            onClick={() =>
+              setExpandedRoleId(expandedRoleId === role.role_id ? null : role.role_id)
+            }
+          >
+            <div className="flex items-center gap-2">
+              <Briefcase size={16} className="text-ibmblue" />
+              <span className="font-medium text-gray-800 capitalize">
+                {role.role_name}
+              </span>
+              {role.timeline && (
+                <span className="text-xs text-gray-500">
+                  (by {new Date(role.timeline).toLocaleDateString()})
                 </span>
-                <button
-                  onClick={async () => {
-                    try {
-                      const res = await deleteUserSkill(skill.id);
-                      if (res.status === 200) {
-                        toastSuccess(res.data.message);
-                        setSkills((prev) =>
-                          prev.filter(
-                            (s) => s.skill_name !== skill.skill_name
-                          )
-                        );
-                      } else {
-                        toastError("Delete failed.");
-                      }
-                    } catch (err) {
-                      toastError("Server error.");
-                    }
-                  }}
-                  className="text-red-500 hover:text-red-600 transition"
-                  title="Remove skill"
-                >
-                  <X size={20} />
-                </button>
-              </li>
-            ))}
-          </ul>
+              )}
+            </div>
+            <div className="flex items-center gap-3">
+              <Plus
+                size={18}
+                className="text-ibmblue cursor-pointer"
+                title="Add Skill"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedRoleId(role.role_id);
+                  setIsAddSkill(true);
+                }}
+              />
+              {expandedRoleId === role.role_id ? (
+                <ChevronUp size={18} className="text-ibmblue" />
+              ) : (
+                <ChevronDown size={18} className="text-ibmblue" />
+              )}
+            </div>
+          </div>
+
+          {/* Accordion Body */}
+          {expandedRoleId === role.role_id && (
+            <div className="p-4 bg-white border-t border-gray-200 rounded-b-lg">
+              {role.skills && role.skills.length > 0 ? (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {role.skills.map((skill) => (
+                    <div
+                      key={skill.id}
+                      className="flex items-center gap-1 bg-ibmblue text-white text-xs px-3 py-1 rounded-full"
+                    >
+                      <span>{skill.skill_name}</span>
+                      <button
+                        onClick={async () => {
+                          try {
+                            const res = await deleteUserSkill(skill.id);
+                            if (res.status === 200) {
+                              toastSuccess(res.data.message);
+                              await refetchRolesWithSkills();
+                            } else {
+                              toastError("Failed to delete skill.");
+                            }
+                          } catch {
+                            toastError("Server error.");
+                          }
+                        }}
+                        className="hover:text-red-400 transition"
+                        title="Remove skill"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500 ml-6">No skills linked yet.</p>
+              )}
+            </div>
+          )}
         </div>
-      )}
-    </>
+      ))}
+    </div>
   )}
-</div>
+</section>
+
 
 
 
@@ -581,6 +666,12 @@ const [selectedRoleId, setSelectedRoleId] = useState("");
                     minDate={new Date()}
                   />
                 </div>
+                {editForm.target_timeline && daysUntil(editForm.target_timeline) < 90 && (
+  <p className="text-yellow-400 text-sm mt-1">
+    The date you have set seems quite close, try a date further away. Remember, there’s no rush when it comes to achieving your goals!
+  </p>
+)}
+
               </div>
 
               <div className="flex justify-end gap-3 pt-2">
@@ -635,38 +726,42 @@ const [selectedRoleId, setSelectedRoleId] = useState("");
 
 
                 <label className="block text-sm font-medium mb-1">
-                  Enter Skill
-                </label>
-                <input
-                  type="text"
-                  value={skillInput}
-                  onChange={(e) => setSkillInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && skillInput.trim()) {
-                      e.preventDefault();
-                      const entered = skillInput.trim().toLowerCase();
+  Enter Skill
+</label>
+<div className="flex gap-2">
+  <input
+    type="text"
+    value={skillInput}
+    onChange={(e) => setSkillInput(e.target.value)}
+    className="flex-1 border border-gray-300 rounded px-3 py-2"
+    placeholder="Type a skill"
+  />
+  <button
+    type="button"
+    onClick={() => {
+      if (!skillInput.trim()) return;
 
-                      const existingSkills = [
-                        ...(skills || []),
-                        ...newSkills,
-                      ].map((s) =>
-                        typeof s === "string"
-                          ? s.toLowerCase()
-                          : s.skill_name.toLowerCase()
-                      );
+      const entered = skillInput.trim().toLowerCase();
 
-                      if (existingSkills.includes(entered)) {
-                        toastError("Skill already exists.");
-                      } else {
-                        setNewSkills([...newSkills, skillInput.trim()]);
-                      }
+      const allExisting = rolesWithSkills.flatMap((r) =>
+        (r.skills || []).map((s) => s.skill_name.toLowerCase())
+      );
+      const existingSkills = [...allExisting, ...newSkills.map((s) => s.toLowerCase())];
 
-                      setSkillInput("");
-                    }
-                  }}
-                  className="w-full border border-gray-300 rounded px-3 py-2"
-                  placeholder="Type skill and press Enter"
-                />
+      if (existingSkills.includes(entered)) {
+        toastError("Skill already exists.");
+      } else {
+        setNewSkills([...newSkills, skillInput.trim()]);
+      }
+
+      setSkillInput("");
+    }}
+    className="bg-ibmblue text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+  >
+    Add
+  </button>
+</div>
+
               </div>
 
               {/* Preview tags */}
