@@ -142,10 +142,12 @@ useEffect(() => {
   try {
     const payload = { 
       authorId: user.id, 
-      questionId: id, 
+      questionId: Number(id), 
       content,
-      targetRoleId: selectedRole 
+      targetRoleId: Number(selectedRole) 
     };
+
+    console.log("anserpay",payload)
 
     const res = await answerQuestion(payload);
     if (res.status === 201) {
