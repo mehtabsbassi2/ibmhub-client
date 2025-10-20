@@ -1,4 +1,4 @@
-import React, { useEffect, useState,useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useSelector } from "react-redux";
 import { getProfile } from "../../redux/userSlice";
 import WelcomeSection from "./WelcomeSection";
@@ -23,37 +23,35 @@ const Home = () => {
 
   const navigate = useNavigate();
 
-const careerRef = useRef(null);
-const qaRef = useRef(null);
-const skillsRef = useRef(null);
-
+  const careerRef = useRef(null);
+  const qaRef = useRef(null);
+  const skillsRef = useRef(null);
 
   useEffect(() => {
-  const fetchDashboard = async () => {
-    try {
-      const res = await getDashboard(profile.id);
-      setDashboardData(res);
+    const fetchDashboard = async () => {
+      try {
+        const res = await getDashboard(profile.id);
+        setDashboardData(res);
 
-      if (res.roles && res.roles.length > 0) {
-        setSelectedRole(res.roles[0]); // default to first role
-        setSkillset(res.roles[0].skills || []);
+        if (res.roles && res.roles.length > 0) {
+          setSelectedRole(res.roles[0]); // default to first role
+          setSkillset(res.roles[0].skills || []);
+        }
+      } catch (err) {
+        console.error("Failed to fetch dashboard data:", err);
       }
-    } catch (err) {
-      console.error("Failed to fetch dashboard data:", err);
-    }
-  };
+    };
 
-  if (profile?.id) fetchDashboard();
-}, [profile]);
-
+    if (profile?.id) fetchDashboard();
+  }, [profile]);
 
   useEffect(() => {
-  if (selectedRole) {
-    setSkillset(selectedRole.skills || []);
-    const recs = generateRecommendations(selectedRole.skills || []);
-    setRecommendations(recs);
-  }
-}, [selectedRole]);
+    if (selectedRole) {
+      setSkillset(selectedRole.skills || []);
+      const recs = generateRecommendations(selectedRole.skills || []);
+      setRecommendations(recs);
+    }
+  }, [selectedRole]);
 
   const generateRecommendations = (skills) => {
     const recs = [];
@@ -80,50 +78,54 @@ const skillsRef = useRef(null);
     return recs;
   };
 
-  if (!dashboardData) return <div className="flex justify-center p-6"><span className="loading loading-bars loading-xl text-ibmblue"></span></div>;
+  if (!dashboardData)
+    return (
+      <div className="flex justify-center p-6">
+        <span className="loading loading-bars loading-xl text-ibmblue"></span>
+      </div>
+    );
 
   const { user } = dashboardData;
-const recentQuestions = selectedRole?.recentQuestions || [];
-const recentAnswers = selectedRole?.recentAnswers || [];
+  const recentQuestions = selectedRole?.recentQuestions || [];
+  const recentAnswers = selectedRole?.recentAnswers || [];
 
+  // Sort skills descending by points (so highest is at bottom)
+  const sortedSkills = [...skillset].sort((a, b) => a.level - b.level); // ascending so top is smallest, bottom is largest
 
-  const chartData = {
-    labels: skillset.map((s) => s.skill_name),
+  const funnelData = {
+    labels: sortedSkills.map((s) => s.skill_name),
     datasets: [
       {
-        label: "Skill Level",
-        data: skillset.map((s) => s.level),
+        label: "Points",
+        data: sortedSkills.map((s) => s.level),
         backgroundColor: "#1f70c1",
       },
     ],
   };
 
-  const chartOptions = {
-  responsive: true,
-  plugins: {
-    legend: { display: false },
-    title: { display: true, text: "Skill Progress Chart" },
-  },
-  scales: {
-    y: {
-      beginAtZero: true,
-      max: 10,
-      ticks: { stepSize: 1 },
-      title: {
-        display: true,
-        text: "Skill Level",
-        font: { size: 14 },
+  const funnelOptions = {
+    indexAxis: "y", // horizontal bars
+    responsive: true,
+    plugins: {
+      legend: { display: false },
+      title: { display: true, text: "Skill Funnel (Highest at Bottom)" },
+      tooltip: {
+        callbacks: {
+          label: (context) => `${context.parsed.x} points`,
+        },
       },
     },
-    x: {
-      title: {
-        display: true,
-        text: "Skills",
-        font: { size: 14 },
+    scales: {
+      x: {
+        beginAtZero: true,
+        ticks: { stepSize: 1 },
+        title: { display: true, text: "Points" },
+      },
+      y: {
+        title: { display: true, text: "Skills" },
       },
     },
-  },
-};
+  };
 
   return (
     <div className="space-y-10 p-6 md:p-10 bg-ibmlight min-h-screen">
@@ -131,96 +133,98 @@ const recentAnswers = selectedRole?.recentAnswers || [];
       <div className="flex justify-between items-center">
         <WelcomeSection />
         <div className="mb-6">
-  <label className="font-medium text-gray-700 mr-2">Select Role:</label>
-  <select
-    className="border border-ibmblue rounded px-4 py-2"
-    value={selectedRole?.id || ""}
-    onChange={(e) => {
-      const role = dashboardData.roles.find(r => r.id === Number(e.target.value));
-      setSelectedRole(role);
-    }}
-  >
-    {dashboardData.roles.map((role) => (
-      <option key={role.id} value={role.id}>
-        {role.role_name}
-      </option>
-    ))}
-  </select>
-</div>
-
+          <label className="font-medium text-gray-700 mr-2">Select Role:</label>
+          <select
+            className="border border-ibmblue rounded px-4 py-2"
+            value={selectedRole?.id || ""}
+            onChange={(e) => {
+              const role = dashboardData.roles.find(
+                (r) => r.id === Number(e.target.value)
+              );
+              setSelectedRole(role);
+            }}
+          >
+            {dashboardData.roles.map((role) => (
+              <option key={role.id} value={role.id}>
+                {role.role_name}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
-      
 
       {/* ⚡ Quick Actions */}
       <section>
-  <h2 className="text-lg font-semibold mb-3 text-gray-700">⚡ Quick Actions</h2>
-  <div className="flex flex-wrap ">
-    {/* Link to ask question */}
-    <a
-      href={ASK_NEW_QUESTION}
-      onClick={(e) => {
-        e.preventDefault();
-        navigate(ASK_NEW_QUESTION);
-      }}
-      className="inline-block underline underline-offset-4 text-ibmblue px-4 py-1.5 rounded hover:bg-ibmlight transition"
-    >
-      Ask Question
-    </a>
- <a
-      href="/questions?tag=myskills"
-      onClick={(e) => {
-        e.preventDefault();
-        navigate("/questions?tag=myskills");
-      }}
-      className="inline-block underline underline-offset-4 text-ibmblue px-4 py-1.5 rounded hover:bg-ibmlight transition"
-    >
-      Browse All Questions
-    </a>
-    <a
-      href="/profile"
-      onClick={(e) => {
-        e.preventDefault();
-        navigate("/profile");
-      }}
-      className="inline-block underline underline-offset-4 text-ibmblue px-4 py-1.5 rounded hover:bg-ibmlight transition"
-    >
-      Update Career Goals
-    </a>
+        <h2 className="text-lg font-semibold mb-3 text-gray-700">
+          ⚡ Quick Actions
+        </h2>
+        <div className="flex flex-wrap ">
+          {/* Link to ask question */}
+          <a
+            href={ASK_NEW_QUESTION}
+            onClick={(e) => {
+              e.preventDefault();
+              navigate(ASK_NEW_QUESTION);
+            }}
+            className="inline-block underline underline-offset-4 text-ibmblue px-4 py-1.5 rounded hover:bg-ibmlight transition"
+          >
+            Ask Question
+          </a>
+          <a
+            href="/questions?tag=myskills"
+            onClick={(e) => {
+              e.preventDefault();
+              navigate("/questions?tag=myskills");
+            }}
+            className="inline-block underline underline-offset-4 text-ibmblue px-4 py-1.5 rounded hover:bg-ibmlight transition"
+          >
+            Browse All Questions
+          </a>
+          <a
+            href="/profile"
+            onClick={(e) => {
+              e.preventDefault();
+              navigate("/profile");
+            }}
+            className="inline-block underline underline-offset-4 text-ibmblue px-4 py-1.5 rounded hover:bg-ibmlight transition"
+          >
+            Update Career Goals
+          </a>
 
-    <a
-      href="#career"
-      onClick={(e) => {
-        e.preventDefault();
-        careerRef.current?.scrollIntoView({ behavior: "smooth" });
-      }}
-      className="inline-block underline underline-offset-4 text-ibmblue px-4 py-1.5 rounded hover:bg-ibmlight transition"
-    >
-      Career Progress
-    </a>
+          <a
+            href="#career"
+            onClick={(e) => {
+              e.preventDefault();
+              careerRef.current?.scrollIntoView({ behavior: "smooth" });
+            }}
+            className="inline-block underline underline-offset-4 text-ibmblue px-4 py-1.5 rounded hover:bg-ibmlight transition"
+          >
+            Career Progress
+          </a>
 
-    <a
-      href="#qa"
-      onClick={(e) => {
-        e.preventDefault();
-        qaRef.current?.scrollIntoView({ behavior: "smooth" });
-      }}
-      className="inline-block underline underline-offset-4 text-ibmblue px-4 py-1.5 rounded hover:bg-ibmlight transition"
-    >
-      Recent Q&A
-    </a>
+          <a
+            href="#qa"
+            onClick={(e) => {
+              e.preventDefault();
+              qaRef.current?.scrollIntoView({ behavior: "smooth" });
+            }}
+            className="inline-block underline underline-offset-4 text-ibmblue px-4 py-1.5 rounded hover:bg-ibmlight transition"
+          >
+            Recent Q&A
+          </a>
 
-    <a
-      href="#skills"
-      onClick={(e) => {
-        e.preventDefault();
-        skillsRef.current?.scrollIntoView({ behavior: "smooth" });
-      }}
-      className="inline-block underline underline-offset-4 text-ibmblue px-4 py-1.5 rounded hover:bg-ibmlight transition"
-    >
-      Skills & Recommendations
-    </a>
-  </div>
-</section>
+          <a
+            href="#skills"
+            onClick={(e) => {
+              e.preventDefault();
+              skillsRef.current?.scrollIntoView({ behavior: "smooth" });
+            }}
+            className="inline-block underline underline-offset-4 text-ibmblue px-4 py-1.5 rounded hover:bg-ibmlight transition"
+          >
+            Skills & Recommendations
+          </a>
+        </div>
+      </section>
       {/* 🎯 Career Progress */}
       <section ref={careerRef} id="career" className=" ">
         <div className="flex gap-[20px]">
@@ -228,23 +232,22 @@ const recentAnswers = selectedRole?.recentAnswers || [];
             <CareerProgress user={user} role={selectedRole} />
           </div>
           <div className="w-full">
-<section className="w-full overflow-x-auto h-[100%] bg-white rounded">
-        {/* 📈 Skill Progress Chart */}
-        <div className="w-full  overflow-x-auto p-6">
-          <h2 className="text-lg font-semibold mb-2 text-ibmblue flex items-center gap-2">
-            <TrendingUp size={18} className="text-ibmblue" /> Skill Growth
-          </h2>
-          <Bar className="overflow-x-auto" data={chartData} options={chartOptions} />
-        </div>
-      </section> 
+            <section className="w-full overflow-x-auto h-[100%] bg-white rounded">
+              {/* 📈 Skill Progress Chart */}
+              <div className="w-full  overflow-x-auto p-6">
+                <h2 className="text-lg font-semibold mb-2 text-ibmblue flex items-center gap-2">
+                  <TrendingUp size={18} className="text-ibmblue" /> Skill Growth
+                </h2>
+                <Bar
+                  className="overflow-x-auto"
+                  data={funnelData}
+                  options={funnelOptions}
+                />
+              </div>
+            </section>
           </div>
-
         </div>
-        
       </section>
-
-      
-      
 
       {/* 📌 Recent Questions & 🗣️ Answers */}
       <section ref={qaRef} id="qa" className="flex  gap-12">
@@ -305,7 +308,6 @@ const recentAnswers = selectedRole?.recentAnswers || [];
             </p>
           )}
         </div>
-        
       </section>
 
       <div className="w-full" ref={skillsRef} id="skills">
@@ -330,9 +332,7 @@ const recentAnswers = selectedRole?.recentAnswers || [];
             </li>
           </ul>
         </div>
-     
       </div>
-     
     </div>
   );
 };
