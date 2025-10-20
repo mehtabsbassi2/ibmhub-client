@@ -36,10 +36,13 @@ const UpdateProfile = () => {
       newErrors.jobTitle = 'Job Title must be between 2 and 100 characters.';
     }
 
-    const bandLevelNum = parseInt(bandLevel.toString().trim(), 10);
-    if (isNaN(bandLevelNum) || bandLevelNum < 6 || bandLevelNum > 10) {
-      newErrors.bandLevel = 'Band Level must be a number between 6 and 10.';
-    }
+    const allowedBands = [
+  "3","4","TN","5","6","6a","6b","7","7a","7b","8","9","10","D","C","B","A"
+];
+if (!allowedBands.includes(bandLevel)) {
+  newErrors.bandLevel = 'Please select a valid band level.';
+}
+
 
     // const emailPattern = /^[a-zA-Z0-9._%+-]+@([a-zA-Z0-9-]+\.)?ibm\.com$/;
     // if (!emailPattern.test(supabaseUser.email)) {
@@ -71,7 +74,8 @@ const UpdateProfile = () => {
         target_role: targetRole.trim(),
       };
 
-      await createUser(payload);
+    const res =  await createUser(payload);
+    console.log("Createded",res)
 
       toastSuccess("Profile Saved")
       navigate('/');
@@ -130,23 +134,40 @@ const UpdateProfile = () => {
           </div>
 
           {/* Band Level */}
-          <div>
-            <input
-              type="number"
-              placeholder="Band Level (6-10)"
-              value={bandLevel}
-              onChange={(e) => setBandLevel(e.target.value)}
-              className={`w-full border rounded p-2 ${
-                errors.bandLevel ? 'border-red-500' : 'border-gray-300'
-              }`}
-              required
-              min={6}
-              max={10}
-            />
-            {errors.bandLevel && (
-              <p className="text-red-600 mt-1 text-sm">{errors.bandLevel}</p>
-            )}
-          </div>
+          {/* Band Level */}
+<div>
+  <select
+    value={bandLevel}
+    onChange={(e) => setBandLevel(e.target.value)}
+    className={`w-full border rounded p-2 ${
+      errors.bandLevel ? 'border-red-500' : 'border-gray-300'
+    }`}
+    required
+  >
+    <option value="">Select Band Level</option>
+    <option value="3">3</option>
+    <option value="4">4</option>
+    <option value="TN">TN</option>
+    <option value="5">5</option>
+    <option value="6">6</option>
+    <option value="6a">6a</option>
+    <option value="6b">6b</option>
+    <option value="7">7</option>
+    <option value="7a">7a</option>
+    <option value="7b">7b</option>
+    <option value="8">8</option>
+    <option value="9">9</option>
+    <option value="10">10</option>
+    <option value="D">D</option>
+    <option value="C">C</option>
+    <option value="B">B</option>
+    <option value="A">A</option>
+  </select>
+  {errors.bandLevel && (
+    <p className="text-red-600 mt-1 text-sm">{errors.bandLevel}</p>
+  )}
+</div>
+
 
           {/* Department */}
           <div>
@@ -163,7 +184,7 @@ const UpdateProfile = () => {
           <div>
             <input
               type="text"
-              placeholder="Target Role"
+              placeholder="Target Role (e.g. Project Manager)"
               value={targetRole}
               onChange={(e) => setTargetRole(e.target.value)}
               className="w-full border border-gray-300 rounded p-2"
