@@ -1,7 +1,7 @@
 import axios from "axios";
 
 //const BASE_URL = "http://localhost:3000/api"
- const BASE_URL="https://ibmhubbackend.netlify.app/api"
+const BASE_URL="https://ibmhub-backend.vercel.app/api"
 
 const api = axios.create({
     baseURL:BASE_URL,
@@ -252,6 +252,7 @@ export const getAvailableUsersForAdmin = async (adminId) => {
   }
 };
 
+
 export const getUserTargetRolesWithUserSkills = async (userId)=>{
     try {
         const res = await api.get(`/target-roles/${userId}/roles-with-skills`)
@@ -261,6 +262,3 @@ export const getUserTargetRolesWithUserSkills = async (userId)=>{
     throw error;
     }
 }
-
-
-
