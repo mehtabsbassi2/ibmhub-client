@@ -2,7 +2,7 @@ import axios from "axios";
 
 //const BASE_URL = "http://35.176.159.208:3000/api"
 
-const BASE_URL="https://eurythmical-landlordly-frankie.ngrok-free.dev/api"
+const BASE_URL="http://3.8.153.96:3000/api"
 
 const api = axios.create({
     baseURL:BASE_URL,
@@ -263,5 +263,6 @@ export const getUserTargetRolesWithUserSkills = async (userId)=>{
     throw error;
     }
 }
+
 
 
