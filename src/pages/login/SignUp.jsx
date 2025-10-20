@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
-import { supabase } from '../../util/superbaseClient';
-import { useNavigate, Link } from 'react-router-dom';
-import { LOGIN_PAGE } from '../../util/Routes';
-import { toastSuccess,toastError } from '../../components/Toastify';
+import React, { useState } from "react";
+import { supabase } from "../../util/superbaseClient";
+import { useNavigate, Link } from "react-router-dom";
+import { LOGIN_PAGE } from "../../util/Routes";
+import { toastSuccess, toastError } from "../../components/Toastify";
 
 const SignUp = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
   const handleSignUp = async (e) => {
@@ -17,11 +17,11 @@ const SignUp = () => {
       password,
     });
 
+    console.log("sign up", data);
     if (error) {
-      
-      toastError(error.message)
+      toastError(error.message);
     } else {
-      toastSuccess("Account created! Please log in.")
+      toastSuccess("Account created! Please log in.");
       navigate(LOGIN_PAGE);
     }
   };
@@ -29,7 +29,9 @@ const SignUp = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-ibmlight px-4 py-10">
       <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
-        <h2 className="text-2xl font-bold text-ibmblue text-center mb-6">Create Your Account</h2>
+        <h2 className="text-2xl font-bold text-ibmblue text-center mb-6">
+          Create Your Account
+        </h2>
 
         <form onSubmit={handleSignUp}>
           <input
@@ -59,8 +61,11 @@ const SignUp = () => {
         </form>
 
         <div className="mt-6 text-center text-sm text-gray-600">
-          Already have an account?{' '}
-          <Link to={LOGIN_PAGE} className="text-ibmblue hover:underline font-medium">
+          Already have an account?{" "}
+          <Link
+            to={LOGIN_PAGE}
+            className="text-ibmblue hover:underline font-medium"
+          >
             Back to login
           </Link>
         </div>
