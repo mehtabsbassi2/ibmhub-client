@@ -48,10 +48,12 @@ const UserOverviewPage = () => {
           role.recentAnswers?.forEach((a) => addActivity(a.createdAt));
         });
 
-        const activityData = Object.entries(activityMap).map(([date, count]) => ({
-          date,
-          count,
-        }));
+        const activityData = Object.entries(activityMap).map(
+          ([date, count]) => ({
+            date,
+            count,
+          })
+        );
 
         setQaActivity(activityData);
       } catch (err) {
@@ -256,9 +258,7 @@ const UserOverviewPage = () => {
                   <div className="text-xs mt-1">
                     on:{" "}
                     <span
-                      onClick={() =>
-                        navigate(`/questions/${a.question?.id}`)
-                      }
+                      onClick={() => navigate(`/questions/${a.question?.id}`)}
                       className="italic text-ibmblue cursor-pointer hover:underline "
                     >
                       {a.question?.title}
