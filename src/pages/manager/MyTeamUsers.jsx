@@ -1,7 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { getUsersForadmin, RemoveUserToAdmin } from "../../api/api";
 import { useNavigate } from "react-router-dom";
-import { Plus, MoreVertical } from "lucide-react";
+import {
+  MoreVertical,
+  Eye,
+  UserMinus,
+  ArrowLeft,
+  Loader2,
+} from "lucide-react";
 import { MANAGER } from "../../util/Routes";
 import { useSelector } from "react-redux";
 import { getProfile } from "../../redux/userSlice";
@@ -18,8 +24,7 @@ const MyTeamUsers = () => {
     try {
       setLoading(true);
       const res = await getUsersForadmin(profile.id);
-      if (Array.isArray(res)) setUsers(res);
-      else setUsers([]);
+      setUsers(Array.isArray(res) ? res : []);
     } catch (error) {
       console.error("Failed to fetch users:", error);
     } finally {
@@ -42,12 +47,7 @@ const MyTeamUsers = () => {
     try {
       const payload = { adminId: profile.id, userId: id };
       const res = await RemoveUserToAdmin(payload);
-      console.log("Res:", res);
-
-      // ✅ remove user from local state immediately
       setUsers((prev) => prev.filter((u) => u.id !== id));
-
-      // ✅ show toast with fallback message
       toastSuccess(res?.message || "User removed successfully");
     } catch (error) {
       console.error("Failed to remove user:", error);
@@ -58,34 +58,38 @@ const MyTeamUsers = () => {
   };
 
   return (
-    <div>
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-ibmblue mb-8 text-left">
-          Team Overview
-        </h1>
-        <div className="flex gap-4 justify-end items-center">
-          <h1 className="underline text-ibmblue">My Users</h1>
-          <button
-            onClick={handleAddClick}
-            className="btn flex items-center gap-2 bg-ibmblue text-white hover:bg-ibmblue/90"
-          >
-            Back
-          </button>
-        </div>
+    <div className="p-6">
+      {/* Header */}
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold text-ibmblue">Team Overview</h1>
+
+        <button
+          onClick={handleAddClick}
+          className="flex items-center gap-2 bg-ibmblue text-white px-4 py-2 rounded-lg shadow hover:bg-blue-800 transition"
+        >
+          <ArrowLeft size={18} />
+          Back
+        </button>
       </div>
 
+      {/* Loader */}
       {loading ? (
-        <div className="flex justify-center p-6">
+        <div className="flex justify-center p-8">
           <span className="loading loading-bars loading-xl text-ibmblue"></span>
         </div>
       ) : users.length === 0 ? (
-        <div className="text-center text-gray-500 py-10">
-          No users added yet. Click “Back” to add users.
+        <div className="text-center text-gray-500 py-12 bg-white rounded-lg shadow">
+          <p className="text-lg font-medium">
+            No users added yet.
+          </p>
+          <p className="text-sm text-gray-400 mt-2">
+            Click “Back” to add users to your team.
+          </p>
         </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="table table-zebra w-full">
-            <thead>
+        <div className="bg-white rounded-xl shadow overflow-auto">
+          <table className="table table-zebra w-full h-full ">
+            <thead className="bg-ibmblue text-white">
               <tr>
                 <th>#</th>
                 <th>Name</th>
@@ -99,9 +103,9 @@ const MyTeamUsers = () => {
             </thead>
             <tbody>
               {users.map((user, idx) => (
-                <tr key={user.id} className="hover:bg-gray-50">
+                <tr key={user.id} className="hover:bg-gray-50 transition-colors">
                   <td>{idx + 1}</td>
-                  <td>{user.name}</td>
+                  <td className="font-medium">{user.name}</td>
                   <td>{user.job_title}</td>
                   <td>{user.band_level}</td>
                   <td>{user.department}</td>
@@ -109,7 +113,7 @@ const MyTeamUsers = () => {
                   <td>{user.points}</td>
                   <td className="relative">
                     <button
-                      className="p-1 rounded hover:bg-gray-200"
+                      className="p-1.5 rounded hover:bg-gray-200 transition"
                       onClick={() =>
                         setOpenMenu(openMenu === user.id ? null : user.id)
                       }
@@ -118,18 +122,20 @@ const MyTeamUsers = () => {
                     </button>
 
                     {openMenu === user.id && (
-                      <div className="absolute right-0 mt-2 w-32 bg-white shadow-lg rounded-md z-10">
+                      <div className="absolute right-0 mt-2 w-40 bg-white shadow-xl border rounded-lg z-20">
                         <button
                           onClick={() => handleView(user.id)}
-                          className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                          className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
                         >
-                          View
+                          <Eye size={16} className="text-ibmblue" />
+                          View Profile
                         </button>
                         <button
                           onClick={() => handleDeleteUser(user.id)}
-                          className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                          className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
                         >
-                          Remove
+                          <UserMinus size={16} />
+                          Remove User
                         </button>
                       </div>
                     )}
