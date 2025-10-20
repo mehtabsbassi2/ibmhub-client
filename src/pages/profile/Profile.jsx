@@ -24,7 +24,8 @@ import {
   Building2,
   CalendarClock,
   X,
-  ChevronDown, ChevronUp
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import "react-circular-progressbar/dist/styles.css";
 import {
@@ -56,7 +57,7 @@ const Profile = () => {
   const profile = useSelector(getProfile);
   const [skills, setSkills] = useState([]);
   const [loading, setLoading] = useState(true);
- const [loadRoles, setLoadRoles] = useState(true);
+  const [loadRoles, setLoadRoles] = useState(true);
   const [isAddTargetRole, setIsAddTargetRole] = useState(false);
   const [targetRoles, setTargetRoles] = useState([]);
   const [newRole, setNewRole] = useState("");
@@ -70,11 +71,10 @@ const Profile = () => {
   const [newSkills, setNewSkills] = useState([]);
   const [skillInput, setSkillInput] = useState("");
   const [qaActivity, setQActivity] = useState([]);
-const [selectedRoleId, setSelectedRoleId] = useState("");
-const [rolesWithSkills, setRolesWithSkills] = useState([]);
-const [loadingRolesWithSkills, setLoadingRolesWithSkills] = useState(true);
-const [expandedRoleId, setExpandedRoleId] = useState(null);
-
+  const [selectedRoleId, setSelectedRoleId] = useState("");
+  const [rolesWithSkills, setRolesWithSkills] = useState([]);
+  const [loadingRolesWithSkills, setLoadingRolesWithSkills] = useState(true);
+  const [expandedRoleId, setExpandedRoleId] = useState(null);
 
   const [editForm, setEditForm] = useState({
     name: profile.name || "",
@@ -109,31 +109,32 @@ const [expandedRoleId, setExpandedRoleId] = useState(null);
   };
 
   useEffect(() => {
-  if (targetRoles.length > 0 && !editForm.target_role) {
-    setEditForm((prev) => ({ ...prev, target_role: targetRoles[0].role_name }));
-  }
-}, [targetRoles]);
+    if (targetRoles.length > 0 && !editForm.target_role) {
+      setEditForm((prev) => ({
+        ...prev,
+        target_role: targetRoles[0].role_name,
+      }));
+    }
+  }, [targetRoles]);
 
-const refetchRolesWithSkills = async () => {
-  try {
-    setLoadingRolesWithSkills(true);
-    const data = await getUserTargetRolesWithUserSkills(profile.id);
-    setRolesWithSkills(data);
-  } catch (err) {
-    console.error("Error refreshing roles with skills:", err);
-  } finally {
-    setLoadingRolesWithSkills(false);
-  }
-};
+  const refetchRolesWithSkills = async () => {
+    try {
+      setLoadingRolesWithSkills(true);
+      const data = await getUserTargetRolesWithUserSkills(profile.id);
+      setRolesWithSkills(data);
+    } catch (err) {
+      console.error("Error refreshing roles with skills:", err);
+    } finally {
+      setLoadingRolesWithSkills(false);
+    }
+  };
 
-
-const daysUntil = (date) => {
-  if (!date) return null;
-  const today = new Date();
-  const diffTime = date - today;
-  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-};
-
+  const daysUntil = (date) => {
+    if (!date) return null;
+    const today = new Date();
+    const diffTime = date - today;
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  };
 
   // useEffect(() => {
   //   const fetchData = async () => {
@@ -189,36 +190,34 @@ const daysUntil = (date) => {
     if (profile?.id) fetchDashboard();
   }, [profile]);
 
-
   useEffect(() => {
-  const fetchRolesWithSkills = async () => {
-    try {
-      setLoadingRolesWithSkills(true);
-      const data = await getUserTargetRolesWithUserSkills(profile.id);
-      console.log("Roles with skills:", data);
-      setRolesWithSkills(data);
-    } catch (err) {
-      console.error("Error loading roles with skills:", err);
-    } finally {
-      setLoadingRolesWithSkills(false);
-    }
-  };
+    const fetchRolesWithSkills = async () => {
+      try {
+        setLoadingRolesWithSkills(true);
+        const data = await getUserTargetRolesWithUserSkills(profile.id);
+        console.log("Roles with skills:", data);
+        setRolesWithSkills(data);
+      } catch (err) {
+        console.error("Error loading roles with skills:", err);
+      } finally {
+        setLoadingRolesWithSkills(false);
+      }
+    };
 
-  if (profile?.id) fetchRolesWithSkills();
-}, [profile?.id]);
-
+    if (profile?.id) fetchRolesWithSkills();
+  }, [profile?.id]);
 
   useEffect(() => {
     const fetchUserTargetRoles = async () => {
       try {
-        setLoadRoles(true)
+        setLoadRoles(true);
         const roles = await getUserTargetRoles(profile.id);
         console.log("Roles", roles);
         setTargetRoles(roles);
       } catch (error) {
         console.error("Error loading target roles", error);
-      }finally{
-        setLoadRoles(false)
+      } finally {
+        setLoadRoles(false);
       }
     };
 
@@ -251,32 +250,31 @@ const daysUntil = (date) => {
   };
 
   const saveSkills = async () => {
-  if (!selectedRoleId) {
-    toastError("Please select a target role first.");
-    return;
-  }
-  try {
-    const res = await addUserSkills({
-      authorId: profile.id,
-      targetRoleId: selectedRoleId,
-      skillNames: newSkills,
-    });
-    if (res.status === 201) {
-      toastSuccess("Skills added successfully!");
-      await refetchRolesWithSkills(); // ✅ Refresh from backend
-    } else {
-      toastError("Failed to add skills.");
+    if (!selectedRoleId) {
+      toastError("Please select a target role first.");
+      return;
     }
-  } catch (err) {
-    toastError("Something went wrong.");
-  } finally {
-    setIsAddSkill(false);
-    setNewSkills([]);
-    setSkillInput("");
-    setSelectedRoleId("");
-  }
-};
-
+    try {
+      const res = await addUserSkills({
+        authorId: profile.id,
+        targetRoleId: selectedRoleId,
+        skillNames: newSkills,
+      });
+      if (res.status === 201) {
+        toastSuccess("Skills added successfully!");
+        await refetchRolesWithSkills(); // ✅ Refresh from backend
+      } else {
+        toastError("Failed to add skills.");
+      }
+    } catch (err) {
+      toastError("Something went wrong.");
+    } finally {
+      setIsAddSkill(false);
+      setNewSkills([]);
+      setSkillInput("");
+      setSelectedRoleId("");
+    }
+  };
 
   const safeQaActivity = Array.isArray(qaActivity) ? qaActivity : [];
   return (
@@ -306,7 +304,7 @@ const daysUntil = (date) => {
                 <Building2 size={14} className="inline mr-1 text-ibmblue" />
                 <strong>Department:</strong> {profile.department}
               </p>
-              <p>
+              <p className="hidden">
                 <Target size={14} className="inline mr-1 text-ibmblue" />
                 <strong>Target Role:</strong> {profile.target_role}
               </p>
@@ -343,157 +341,166 @@ const daysUntil = (date) => {
           </div>
 
           {loadRoles ? (
-            <div className="flex justify-center p-6"><span className="loading loading-bars loading-xl text-ibmblue"></span></div>)
-             : <div className="bg-white mr-8  rounded-xl  space-y-4 mt-4">
-            {targetRoles.length === 0 ? (
-              <p>No roles set</p>
-            ) : (
-              <ul className="border p-4 rounded-xl border-ibmblue divide-y divide-gray-200">
-                {targetRoles.map((role) => (
-                  <li
-                    key={role.id}
-                    className="flex items-center justify-between py-3 px-1 rounded hover:bg-gray-50 transition"
+            <div className="flex justify-center p-6">
+              <span className="loading loading-bars loading-xl text-ibmblue"></span>
+            </div>
+          ) : (
+            <div className="bg-white mr-8  rounded-xl  space-y-4 mt-4">
+              {targetRoles.length === 0 ? (
+                <p>No roles set</p>
+              ) : (
+                <ul className="border p-4 rounded-xl border-ibmblue divide-y divide-gray-200">
+                  {targetRoles.map((role) => (
+                    <li
+                      key={role.id}
+                      className="flex items-center justify-between py-3 px-1 rounded hover:bg-gray-50 transition"
+                    >
+                      <span className="text-sm font-medium text-gray-700 capitalize">
+                        {role.role_name}{" "}
+                        {role.timeline && (
+                          <span className="text-xs text-gray-500">
+                            (by {new Date(role.timeline).toLocaleDateString()})
+                          </span>
+                        )}
+                      </span>
+                      <button
+                        onClick={async () => {
+                          try {
+                            const res = await deleteUserTargetRole(role.id);
+                            console.log("Deleted Role", res);
+                            if (res.status === 200) {
+                              toastSuccess(res.data.message);
+                              setTargetRoles((prev) =>
+                                prev.filter((r) => r.id !== role.id)
+                              );
+                            } else {
+                              toastError("Delete failed.");
+                            }
+                          } catch (err) {
+                            toastError("Server error.");
+                          }
+                        }}
+                        className="text-red-500 hover:text-red-600 transition"
+                        title="Remove role"
+                      >
+                        <X size={20} />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+        </section>
+
+        {/* 🎯 Target Roles with Skills Section */}
+        <section className="mt-8">
+          <div className="flex justify-between items-center pr-10">
+            <h2 className="text-lg font-semibold text-ibmblue flex items-center gap-2">
+              <Target size={18} className="text-ibmblue" /> Target Roles with
+              Skills
+            </h2>
+          </div>
+
+          {loadingRolesWithSkills ? (
+            <div className="flex justify-center p-6">
+              <span className="loading loading-bars loading-xl text-ibmblue"></span>
+            </div>
+          ) : rolesWithSkills.length === 0 ? (
+            <p className="text-gray-500 mt-2">
+              No target roles with skills yet.
+            </p>
+          ) : (
+            <div className="mt-4 bg-white border border-ibmblue rounded-xl p-4 space-y-4 mr-8">
+              {rolesWithSkills.map((role) => (
+                <div
+                  key={role.role_id}
+                  className="border border-gray-200 rounded-lg"
+                >
+                  {/* Accordion Header */}
+                  <div
+                    className="flex items-center justify-between p-3 cursor-pointer bg-gray-50 hover:bg-gray-100 rounded-t-lg transition"
+                    onClick={() =>
+                      setExpandedRoleId(
+                        expandedRoleId === role.role_id ? null : role.role_id
+                      )
+                    }
                   >
-                    <span className="text-sm font-medium text-gray-700 capitalize">
-                      {role.role_name}{" "}
+                    <div className="flex items-center gap-2">
+                      <Briefcase size={16} className="text-ibmblue" />
+                      <span className="font-medium text-gray-800 capitalize">
+                        {role.role_name}
+                      </span>
                       {role.timeline && (
                         <span className="text-xs text-gray-500">
                           (by {new Date(role.timeline).toLocaleDateString()})
                         </span>
                       )}
-                    </span>
-                    <button
-                      onClick={async () => {
-                        try {
-                          const res = await deleteUserTargetRole(role.id);
-                          console.log("Deleted Role", res);
-                          if (res.status === 200) {
-                            toastSuccess(res.data.message);
-                            setTargetRoles((prev) =>
-                              prev.filter((r) => r.id !== role.id)
-                            );
-                          } else {
-                            toastError("Delete failed.");
-                          }
-                        } catch (err) {
-                          toastError("Server error.");
-                        }
-                      }}
-                      className="text-red-500 hover:text-red-600 transition"
-                      title="Remove role"
-                    >
-                      <X size={20} />
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>}
-        </section>
-
-        
-
-{/* 🎯 Target Roles with Skills Section */}
-<section className="mt-8">
-  <div className="flex justify-between items-center pr-10">
-    <h2 className="text-lg font-semibold text-ibmblue flex items-center gap-2">
-      <Target size={18} className="text-ibmblue" /> Target Roles with Skills
-    </h2>
-  </div>
-
-  {loadingRolesWithSkills ? (
-    <div className="flex justify-center p-6">
-      <span className="loading loading-bars loading-xl text-ibmblue"></span>
-    </div>
-  ) : rolesWithSkills.length === 0 ? (
-    <p className="text-gray-500 mt-2">No target roles with skills yet.</p>
-  ) : (
-    <div className="mt-4 bg-white border border-ibmblue rounded-xl p-4 space-y-4 mr-8">
-      {rolesWithSkills.map((role) => (
-        <div key={role.role_id} className="border border-gray-200 rounded-lg">
-          {/* Accordion Header */}
-          <div
-            className="flex items-center justify-between p-3 cursor-pointer bg-gray-50 hover:bg-gray-100 rounded-t-lg transition"
-            onClick={() =>
-              setExpandedRoleId(expandedRoleId === role.role_id ? null : role.role_id)
-            }
-          >
-            <div className="flex items-center gap-2">
-              <Briefcase size={16} className="text-ibmblue" />
-              <span className="font-medium text-gray-800 capitalize">
-                {role.role_name}
-              </span>
-              {role.timeline && (
-                <span className="text-xs text-gray-500">
-                  (by {new Date(role.timeline).toLocaleDateString()})
-                </span>
-              )}
-            </div>
-            <div className="flex items-center gap-3">
-              <Plus
-                size={18}
-                className="text-ibmblue cursor-pointer"
-                title="Add Skill"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setSelectedRoleId(role.role_id);
-                  setIsAddSkill(true);
-                }}
-              />
-              {expandedRoleId === role.role_id ? (
-                <ChevronUp size={18} className="text-ibmblue" />
-              ) : (
-                <ChevronDown size={18} className="text-ibmblue" />
-              )}
-            </div>
-          </div>
-
-          {/* Accordion Body */}
-          {expandedRoleId === role.role_id && (
-            <div className="p-4 bg-white border-t border-gray-200 rounded-b-lg">
-              {role.skills && role.skills.length > 0 ? (
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {role.skills.map((skill) => (
-                    <div
-                      key={skill.id}
-                      className="flex items-center gap-1 bg-ibmblue text-white text-xs px-3 py-1 rounded-full"
-                    >
-                      <span>{skill.skill_name}</span>
-                      <button
-                        onClick={async () => {
-                          try {
-                            const res = await deleteUserSkill(skill.id);
-                            if (res.status === 200) {
-                              toastSuccess(res.data.message);
-                              await refetchRolesWithSkills();
-                            } else {
-                              toastError("Failed to delete skill.");
-                            }
-                          } catch {
-                            toastError("Server error.");
-                          }
-                        }}
-                        className="hover:text-red-400 transition"
-                        title="Remove skill"
-                      >
-                        <X size={14} />
-                      </button>
                     </div>
-                  ))}
+                    <div className="flex items-center gap-3">
+                      <Plus
+                        size={18}
+                        className="text-ibmblue cursor-pointer"
+                        title="Add Skill"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedRoleId(role.role_id);
+                          setIsAddSkill(true);
+                        }}
+                      />
+                      {expandedRoleId === role.role_id ? (
+                        <ChevronUp size={18} className="text-ibmblue" />
+                      ) : (
+                        <ChevronDown size={18} className="text-ibmblue" />
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Accordion Body */}
+                  {expandedRoleId === role.role_id && (
+                    <div className="p-4 bg-white border-t border-gray-200 rounded-b-lg">
+                      {role.skills && role.skills.length > 0 ? (
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {role.skills.map((skill) => (
+                            <div
+                              key={skill.id}
+                              className="flex items-center gap-1 bg-ibmblue text-white text-xs px-3 py-1 rounded-full"
+                            >
+                              <span>{skill.skill_name}</span>
+                              <button
+                                onClick={async () => {
+                                  try {
+                                    const res = await deleteUserSkill(skill.id);
+                                    if (res.status === 200) {
+                                      toastSuccess(res.data.message);
+                                      await refetchRolesWithSkills();
+                                    } else {
+                                      toastError("Failed to delete skill.");
+                                    }
+                                  } catch {
+                                    toastError("Server error.");
+                                  }
+                                }}
+                                className="hover:text-red-400 transition"
+                                title="Remove skill"
+                              >
+                                <X size={14} />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-gray-500 ml-6">
+                          No skills linked yet.
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <p className="text-sm text-gray-500 ml-6">No skills linked yet.</p>
-              )}
+              ))}
             </div>
           )}
-        </div>
-      ))}
-    </div>
-  )}
-</section>
-
-
-
+        </section>
 
         <section className="bg-white rounded-lg  p-6  mt-6 text-xs">
           <ActivityHeatmap data={safeQaActivity} />
@@ -618,38 +625,59 @@ const daysUntil = (date) => {
                   className="w-full flex-1 border border-gray-300 rounded-lg px-3 py-2"
                 />
               </div>
-             <div>
-  <label className="block text-sm font-medium">Target Role</label>
-  <select
-    name="target_role"
-    value={editForm.target_role}
-    onChange={handleEditChange}
-    className="w-full flex-1 border border-gray-300 rounded-lg px-3 py-2"
-  >
-    <option value="">-- Select Target Role --</option>
-    {targetRoles.map((role) => (
-      <option key={role.id} value={role.role_name}>
-        {role.role_name}
-      </option>
-    ))}
-  </select>
-</div>
+              <div>
+                <label className="block text-sm font-medium">Target Role</label>
+                <select
+                  name="target_role"
+                  value={editForm.target_role}
+                  onChange={handleEditChange}
+                  className="w-full flex-1 border border-gray-300 rounded-lg px-3 py-2"
+                >
+                  <option value="">-- Select Target Role --</option>
+                  {targetRoles.map((role) => (
+                    <option key={role.id} value={role.role_name}>
+                      {role.role_name}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
               <div className="flex items-center gap-3">
                 <div className="w-full">
                   <label className="block text-sm font-medium">
                     Band Level
                   </label>
-                  <input
-                    type="number"
+                  <select
                     name="band_level"
-                    disabled
-                    min={6}
-                    max={10}
                     value={editForm.band_level}
                     onChange={handleEditChange}
                     className="w-full flex-1 border border-gray-300 rounded-lg px-3 py-2"
-                  />
+                  >
+                    <option value="">-- Select Band Level --</option>
+                    {[
+                      "3",
+                      "4",
+                      "TN",
+                      "5",
+                      "6",
+                      "6a",
+                      "6b",
+                      "7",
+                      "7a",
+                      "7b",
+                      "8",
+                      "9",
+                      "10",
+                      "D",
+                      "C",
+                      "B",
+                      "A",
+                    ].map((band) => (
+                      <option key={band} value={band}>
+                        {band}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div className="w-full">
                   <label className="block text-sm font-medium">
@@ -666,12 +694,14 @@ const daysUntil = (date) => {
                     minDate={new Date()}
                   />
                 </div>
-                {editForm.target_timeline && daysUntil(editForm.target_timeline) < 90 && (
-  <p className="text-yellow-400 text-sm mt-1">
-    The date you have set seems quite close, try a date further away. Remember, there’s no rush when it comes to achieving your goals!
-  </p>
-)}
-
+                {editForm.target_timeline &&
+                  daysUntil(editForm.target_timeline) < 90 && (
+                    <p className="text-yellow-400 text-sm mt-1">
+                      The date you have set seems quite close, try a date
+                      further away. Remember, there’s no rush when it comes to
+                      achieving your goals!
+                    </p>
+                  )}
               </div>
 
               <div className="flex justify-end gap-3 pt-2">
@@ -707,61 +737,62 @@ const daysUntil = (date) => {
             <div className="space-y-4">
               <div>
                 <div>
-  <label className="block text-sm font-medium mb-1">
-    Select Target Role
-  </label>
-  <select
-    value={selectedRoleId}
-    onChange={(e) => setSelectedRoleId(e.target.value)}
-    className="w-full border border-gray-300 rounded px-3 py-2"
-  >
-    <option value="">-- Select a Role --</option>
-    {targetRoles.map((role) => (
-      <option key={role.id} value={role.id}>
-        {role.role_name}
-      </option>
-    ))}
-  </select>
-</div>
-
+                  <label className="block text-sm font-medium mb-1">
+                    Select Target Role
+                  </label>
+                  <select
+                    value={selectedRoleId}
+                    onChange={(e) => setSelectedRoleId(e.target.value)}
+                    className="w-full border border-gray-300 rounded px-3 py-2"
+                  >
+                    <option value="">-- Select a Role --</option>
+                    {targetRoles.map((role) => (
+                      <option key={role.id} value={role.id}>
+                        {role.role_name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
                 <label className="block text-sm font-medium mb-1">
-  Enter Skill
-</label>
-<div className="flex gap-2">
-  <input
-    type="text"
-    value={skillInput}
-    onChange={(e) => setSkillInput(e.target.value)}
-    className="flex-1 border border-gray-300 rounded px-3 py-2"
-    placeholder="Type a skill"
-  />
-  <button
-    type="button"
-    onClick={() => {
-      if (!skillInput.trim()) return;
+                  Enter Skill
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={skillInput}
+                    onChange={(e) => setSkillInput(e.target.value)}
+                    className="flex-1 border border-gray-300 rounded px-3 py-2"
+                    placeholder="Type a skill"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!skillInput.trim()) return;
 
-      const entered = skillInput.trim().toLowerCase();
+                      const entered = skillInput.trim().toLowerCase();
 
-      const allExisting = rolesWithSkills.flatMap((r) =>
-        (r.skills || []).map((s) => s.skill_name.toLowerCase())
-      );
-      const existingSkills = [...allExisting, ...newSkills.map((s) => s.toLowerCase())];
+                      const allExisting = rolesWithSkills.flatMap((r) =>
+                        (r.skills || []).map((s) => s.skill_name.toLowerCase())
+                      );
+                      const existingSkills = [
+                        ...allExisting,
+                        ...newSkills.map((s) => s.toLowerCase()),
+                      ];
 
-      if (existingSkills.includes(entered)) {
-        toastError("Skill already exists.");
-      } else {
-        setNewSkills([...newSkills, skillInput.trim()]);
-      }
+                      if (existingSkills.includes(entered)) {
+                        toastError("Skill already exists.");
+                      } else {
+                        setNewSkills([...newSkills, skillInput.trim()]);
+                      }
 
-      setSkillInput("");
-    }}
-    className="bg-ibmblue text-white px-4 py-2 rounded hover:bg-blue-700 transition"
-  >
-    Add
-  </button>
-</div>
-
+                      setSkillInput("");
+                    }}
+                    className="bg-ibmblue text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+                  >
+                    Add
+                  </button>
+                </div>
               </div>
 
               {/* Preview tags */}
