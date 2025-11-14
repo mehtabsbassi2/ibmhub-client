@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { getDashboard } from "../../api/api";
+import { getDashboard, getUserBadges } from "../../api/api";
 import "react-circular-progressbar/dist/styles.css";
 import { Bar } from "react-chartjs-2";
 import { BarChart2 } from "lucide-react";
@@ -10,6 +10,7 @@ import "react-tooltip/dist/react-tooltip.css";
 
 import CareerProgress from "../home/CareerProgress";
 import ActivityHeatmap from "../home/ActivityHeatmap";
+import UserBadges from "../home/UserBadges";
 
 const UserOverviewPage = () => {
   const { id } = useParams();
@@ -18,6 +19,7 @@ const UserOverviewPage = () => {
   const [skillset, setSkillset] = useState([]);
   const [recommendations, setRecommendations] = useState([]);
   const [selectedRole, setSelectedRole] = useState(null);
+   const [badges, setBadges] = useState([]);
 
   const navigate = useNavigate();
 
@@ -71,6 +73,16 @@ const UserOverviewPage = () => {
       setRecommendations(recs);
     }
   }, [selectedRole]);
+
+  
+    useEffect(() => {
+      const fetchBadges = async () => {
+        const res = await getUserBadges(id);
+  
+        setBadges(res);
+      };
+      fetchBadges();
+    }, [id]);
 
   const generateRecommendations = (skills) => {
     const recs = [];
@@ -199,6 +211,11 @@ const UserOverviewPage = () => {
             </section>
           </div>
         </div>
+      </section>
+
+       {/* Earned Badges */}
+      <section>
+            <UserBadges badges={badges} />
       </section>
 
       {/* 🔹 Skills */}
