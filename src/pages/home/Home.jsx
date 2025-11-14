@@ -3,7 +3,7 @@ import { useSelector } from "react-redux";
 import { getProfile } from "../../redux/userSlice";
 import WelcomeSection from "./WelcomeSection";
 import { useNavigate } from "react-router-dom";
-import { getDashboard } from "../../api/api";
+import { getDashboard, getUserBadges, updateUserPoints } from "../../api/api";
 import "react-circular-progressbar/dist/styles.css";
 import { Bar } from "react-chartjs-2";
 import { BarChart2 } from "lucide-react";
@@ -13,6 +13,7 @@ import "react-calendar-heatmap/dist/styles.css";
 import "react-tooltip/dist/react-tooltip.css";
 import CareerProgress from "./CareerProgress";
 import { ASK_NEW_QUESTION } from "../../util/Routes";
+import UserBadges from "./UserBadges";
 
 const Home = () => {
   const profile = useSelector(getProfile);
@@ -20,6 +21,8 @@ const Home = () => {
   const [skillset, setSkillset] = useState([]);
   const [recommendations, setRecommendations] = useState([]);
   const [selectedRole, setSelectedRole] = useState(null);
+   const [badges, setBadges] = useState([]);
+
 
   const navigate = useNavigate();
 
@@ -27,23 +30,41 @@ const Home = () => {
   const qaRef = useRef(null);
   const skillsRef = useRef(null);
 
-  useEffect(() => {
-    const fetchDashboard = async () => {
-      try {
-        const res = await getDashboard(profile.id);
-        setDashboardData(res);
+ useEffect(() => {
+  const fetchDashboard = async () => {
+    try {
+      const res = await getDashboard(profile.id);
+      setDashboardData(res);
 
-        if (res.roles && res.roles.length > 0) {
-          setSelectedRole(res.roles[0]); // default to first role
-          setSkillset(res.roles[0].skills || []);
-        }
-      } catch (err) {
-        console.error("Failed to fetch dashboard data:", err);
+      console.log("RES",res)
+      // STEP 1️⃣: Extract points from backend dashboard response
+      const newPoints = res.user?.points || 0;
+
+      // STEP 2️⃣: Immediately sync user points in backend (and check for badges)
+     const apires= await updateUserPoints(profile.id, newPoints);
+     console.log("APIRES",apires)
+
+      if (res.roles && res.roles.length > 0) {
+        setSelectedRole(res.roles[0]); // default to first role
+        setSkillset(res.roles[0].skills || []);
       }
-    };
+    } catch (err) {
+      console.error("Failed to fetch dashboard data:", err);
+    }
+  };
 
-    if (profile?.id) fetchDashboard();
-  }, [profile]);
+  if (profile?.id) fetchDashboard();
+}, [profile]);
+
+
+  useEffect(() => {
+    const fetchBadges = async () => {
+      const res = await getUserBadges(profile.id);
+
+      setBadges(res);
+    };
+    fetchBadges();
+  }, [profile.id]);
 
   useEffect(() => {
     if (selectedRole) {
@@ -247,6 +268,10 @@ const Home = () => {
             </section>
           </div>
         </div>
+      </section>
+        {/* Earned Badges */}
+      <section>
+            <UserBadges badges={badges} />
       </section>
 
       {/* 📌 Recent Questions & 🗣️ Answers */}
