@@ -47,10 +47,10 @@ function App() {
     <Route path={QUESTION_DEATIL_PAGE} element={<QuestionDetailPage />} />
     <Route path={DRAFTS} element={<QuestionDrafts/>} />
     <Route path={USER_QUESTIONS} element={<UserQuestions/>} />
-    <Route path={MANAGER} element={<ManagerPage/>} />
+    <Route path={MANAGER} element={<MyTeamUsers/>} />
     <Route path={USER_OVERVIEW} element={<UserOverviewPage/>} />
     <Route path={NEW_USER} element={<CreateNewUserPage/>} />
-    <Route path={MYUSERS} element={<MyTeamUsers/>} />
+    <Route path={MYUSERS} element={<ManagerPage/>} />
   </Route>
 </Routes>
 
