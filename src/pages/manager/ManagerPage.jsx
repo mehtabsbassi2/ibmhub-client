@@ -6,10 +6,10 @@ import {
   MoreVertical,
   UserPlus,
   Eye,
-  Users,
+  ArrowLeft,
   Loader2,
 } from "lucide-react";
-import { MYUSERS } from "../../util/Routes";
+import { MANAGER, MYUSERS } from "../../util/Routes";
 import { getProfile } from "../../redux/userSlice";
 import { toastSuccess, toastError } from "../../components/Toastify";
 
@@ -72,11 +72,11 @@ const ManagerPage = () => {
         <h1 className="text-3xl font-bold text-ibmblue">Available Users</h1>
 
         <button
-          onClick={() => navigate(MYUSERS)}
+          onClick={() => navigate(MANAGER)}
           className="flex items-center gap-2 bg-ibmblue text-white px-4 py-2 rounded-lg shadow hover:bg-blue-800 transition"
         >
-          <Users size={18} />
-          My Team
+         <ArrowLeft size={18} />
+          Back
         </button>
       </div>
 
@@ -93,7 +93,7 @@ const ManagerPage = () => {
           </p>
         </div>
       ) : (
-        <div className="bg-white rounded-xl shadow overflow-auto">
+        <div className="bg-white rounded-xl shadow">
           <table className="table table-zebra w-full">
             <thead className="bg-ibmblue text-white">
               <tr>
@@ -104,6 +104,7 @@ const ManagerPage = () => {
                 <th>Department</th>
                 <th>Target Role</th>
                 <th>Points</th>
+                 <th>Badges</th>
                 <th>Action</th>
               </tr>
             </thead>
@@ -120,6 +121,7 @@ const ManagerPage = () => {
                   <td>{user.department}</td>
                   <td>{user.target_role || "—"}</td>
                   <td>{user.points}</td>
+                   <td>{user.badges?.length || 0}</td>
                   <td className="relative">
                     <button
                       className="p-1.5 rounded hover:bg-gray-200 transition"
