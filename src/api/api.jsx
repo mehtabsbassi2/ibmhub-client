@@ -1,8 +1,8 @@
 import axios from "axios";
 
-//const BASE_URL = "http://35.176.159.208:3000/api"
-
-const BASE_URL="http://3.8.153.96:3000/api"
+const BASE_URL = "http://3.8.153.96:3000/api"
+//const BASE_URL = "http://localhost:3000/api"
+//const BASE_URL="https://ibmhubbackend.netlify.app/api"
 
 const api = axios.create({
     baseURL:BASE_URL,
@@ -19,7 +19,14 @@ export const createUser = async (payload)=>{
         console.log("Failed to create user",error)
     }
 }
-
+ export const toogleAddmin = async (id)=>{
+    try {
+        const res = await api.put(`/users/toggle-admin/${id}`)
+        return res.data
+    } catch (error) {
+        console.log("Failed to toogle User account",error)
+    }
+ }
 export const getUsers = async()=>{
     try {
         const res = await api.get("/users")
@@ -27,6 +34,24 @@ export const getUsers = async()=>{
     } catch (error) {
                 console.log("Failed to load users",error)
 
+    }
+}
+
+export const updateUserPoints = async(id,newPoints)=>{
+    try {
+        const res = await api.put(`/users/${id}/points`,{newPoints})
+        return res.data
+    } catch (error) {
+        console.log("Failed to update user points",error)
+    }
+}
+
+export const getUserBadges = async (userId)=>{
+    try {
+        const res = await api.get(`/badges/user/${userId}`)
+        return res.data
+    } catch (error) {
+        console.log("Failed to fetch user badges",error)
     }
 }
 export const addUserTargetRole = async(data)=>{
@@ -263,6 +288,3 @@ export const getUserTargetRolesWithUserSkills = async (userId)=>{
     throw error;
     }
 }
-
-
-
