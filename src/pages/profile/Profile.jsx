@@ -34,9 +34,11 @@ import {
   deleteUserSkill,
   deleteUserTargetRole,
   getDashboard,
+  getUserBadges,
   getUserSkills,
   getUserTargetRoles,
   getUserTargetRolesWithUserSkills,
+  toogleAddmin,
   updateProfile,
 } from "../../api/api";
 import { toastError, toastSuccess } from "../../components/Toastify";
@@ -75,6 +77,9 @@ const Profile = () => {
   const [rolesWithSkills, setRolesWithSkills] = useState([]);
   const [loadingRolesWithSkills, setLoadingRolesWithSkills] = useState(true);
   const [expandedRoleId, setExpandedRoleId] = useState(null);
+    const [isUpdatingRole, setIsUpdatingRole] = useState(false);
+    const [badges,setBadges]=useState([])
+
 
   const [editForm, setEditForm] = useState({
     name: profile.name || "",
@@ -108,6 +113,15 @@ const Profile = () => {
     }
   };
 
+    useEffect(() => {
+      const fetchBadges = async () => {
+        const res = await getUserBadges(profile.id);
+  
+        setBadges(res);
+      };
+      fetchBadges();
+    }, [profile.id]);
+
   useEffect(() => {
     if (targetRoles.length > 0 && !editForm.target_role) {
       setEditForm((prev) => ({
@@ -116,6 +130,39 @@ const Profile = () => {
       }));
     }
   }, [targetRoles]);
+
+
+const handleToggleAccountType = async () => {
+  if (!profile?.id) return toastError("User not loaded");
+
+  try {
+    setIsUpdatingRole(true);
+
+    const res = await toogleAddmin(profile.id);
+    console.log("Admin toggle", res);
+
+    if (!res || !res.user) throw new Error("Failed to toggle account type");
+
+    setProfile((prev) => ({
+      ...prev,
+      accountType: res.user.accountType,
+    }));
+
+    toastSuccess(`Account type switched to ${res.user.accountType}`);
+
+    // ✅ Reload page after a short delay to reflect updated data
+    setTimeout(() => {
+      window.location.reload();
+    }, 1000);
+  } catch (err) {
+    console.error(err);
+    toastError("Error updating account type");
+  } finally {
+    setIsUpdatingRole(false);
+  }
+};
+
+
 
   const refetchRolesWithSkills = async () => {
     try {
@@ -249,42 +296,91 @@ const Profile = () => {
     }
   };
 
-  const saveSkills = async () => {
-    if (!selectedRoleId) {
-      toastError("Please select a target role first.");
-      return;
+ const saveSkills = async () => {
+  if (!selectedRoleId) {
+    toastError("Please select a target role first.");
+    return;
+  }
+
+  const entered = skillInput.trim();
+  if (!entered) return;
+
+  const allExisting = rolesWithSkills.flatMap((r) =>
+    (r.skills || []).map((s) => s.skill_name.toLowerCase())
+  );
+
+  if (allExisting.includes(entered.toLowerCase())) {
+    toastError("Skill already exists.");
+    return;
+  }
+
+  try {
+    // ✅ Directly use entered skill instead of waiting for setNewSkills
+    const res = await addUserSkills({
+      authorId: profile.id,
+      targetRoleId: selectedRoleId,
+      skillNames: [entered], // send immediately
+    });
+
+    if (res.status === 201) {
+      toastSuccess("Skill added successfully!");
+      await refetchRolesWithSkills(); // refresh UI
+    } else {
+      toastError("Failed to add skill.");
     }
-    try {
-      const res = await addUserSkills({
-        authorId: profile.id,
-        targetRoleId: selectedRoleId,
-        skillNames: newSkills,
-      });
-      if (res.status === 201) {
-        toastSuccess("Skills added successfully!");
-        await refetchRolesWithSkills(); // ✅ Refresh from backend
-      } else {
-        toastError("Failed to add skills.");
-      }
-    } catch (err) {
-      toastError("Something went wrong.");
-    } finally {
-      setIsAddSkill(false);
-      setNewSkills([]);
-      setSkillInput("");
-      setSelectedRoleId("");
-    }
-  };
+  } catch (err) {
+    console.error(err);
+    toastError("Something went wrong.");
+  } finally {
+    // ✅ Reset states safely
+    setIsAddSkill(false);
+    setNewSkills([]);
+    setSkillInput("");
+    setSelectedRoleId("");
+  }
+};
+
 
   const safeQaActivity = Array.isArray(qaActivity) ? qaActivity : [];
   return (
     <div className="p-6 bg-ibmlight min-h-screen">
       <div className="bg-white p-6 rounded shadow space-y-6">
-        <h1 className="text-2xl font-bold text-ibmblue flex items-center gap-2">
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-ibmblue flex items-center gap-2">
           <UserCheck size={22} /> Career Profile
         </h1>
+        <div className="flex items-center gap-4 mt-6 pr-10">
+  <span className="font-semibold text-gray-700">
+    {profile?.accountType || "USER"}
+  </span>
 
-        <div className="flex flex-col items-center gap-20">
+  <button
+    onClick={handleToggleAccountType}
+    disabled={isUpdatingRole}
+    className={`relative inline-flex h-6 w-12 items-center rounded-full transition-colors ${
+      profile?.accountType === "ADMIN"
+        ? "bg-ibmblue"
+        : "bg-gray-300"
+    }`}
+  >
+    <span
+      className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
+        profile?.accountType === "ADMIN"
+          ? "translate-x-6"
+          : "translate-x-1"
+      }`}
+    />
+  </button>
+
+  {isUpdatingRole && (
+    <span className="text-sm text-gray-500">Updating...</span>
+  )}
+</div>
+
+        </div>
+        
+
+        <div className="flex flex-col items-center gap-20 ">
           {/* Career Details */}
           <div className="w-full h-full relative">
             <div className="w-full h-full space-y-2 text-gray-800 text-sm flex flex-col justify-evenly">
@@ -309,7 +405,7 @@ const Profile = () => {
                 <strong>Target Role:</strong> {profile.target_role}
               </p>
             </div>
-            <div className="absolute right-10 top-0">
+            <div className="absolute right-15 top-5">
               <Pencil
                 size={24}
                 className="text-ibmblue cursor-pointer"
@@ -328,16 +424,57 @@ const Profile = () => {
           </p>
         </section>
 
+        {/* 🏅 User Badges */}
+<section className="mt-6">
+  <h2 className="text-lg font-semibold text-ibmblue flex items-center gap-2">
+    <UserCheck size={18} /> Career Badges
+  </h2>
+
+  {!badges || badges.length === 0 ? (
+    <p className="text-gray-500 mt-2">No badges earned yet.</p>
+  ) : (
+    <div className="flex flex-wrap gap-3 mt-3 bg-white border border-ibmblue p-4 rounded-xl mr-8">
+      {badges.map((badge) => (
+        <div
+          key={badge.id}
+          className="px-3 py-1 rounded-full text-xs font-semibold shadow-sm flex items-center gap-2"
+          style={{
+            backgroundColor: badge.color || "#1f70c1",
+            color: "#fff",
+          }}
+        >
+            {/* Badge Image */}
+          {badge.image && (
+            <img
+              src={badge.image}
+              alt={badge.name}
+              className="w-5 h-5 rounded-full object-cover"
+            />
+          )}
+
+          {/* Badge Name */}
+          <span>{badge.name}</span>
+        </div>
+      ))}
+    </div>
+  )}
+</section>
+
+
         <section className="mt-6">
           <div className="flex justify-between items-center pr-10">
             <h2 className="text-lg font-semibold text-ibmblue flex items-center gap-2">
               <Target size={18} className="text-ibmblue" /> Target Roles
             </h2>
-            <Plus
+            <div onClick={() => setIsAddTargetRole(true)} className="flex items-center">
+              <h1>Add Target Role</h1>
+              <Plus
               size={24}
               className="text-ibmblue cursor-pointer"
-              onClick={() => setIsAddTargetRole(true)}
+              
             />
+            </div>
+            
           </div>
 
           {loadRoles ? (
@@ -438,7 +575,7 @@ const Profile = () => {
                       )}
                     </div>
                     <div className="flex items-center gap-3">
-                      <Plus
+                      {/* <Plus
                         size={18}
                         className="text-ibmblue cursor-pointer"
                         title="Add Skill"
@@ -447,7 +584,21 @@ const Profile = () => {
                           setSelectedRoleId(role.role_id);
                           setIsAddSkill(true);
                         }}
-                      />
+                      /> */}
+                      <button
+  onClick={(e) => {
+    e.stopPropagation();
+    console.log("setroleid",role)
+    setSelectedRoleId(role.id);
+    setIsAddSkill(true);
+  }}
+  className="text-ibmblue text-sm font-medium hover:underline"
+>
+<h1 className="flex items-center mr-4">
+  Add Skill <Plus size={16}/>
+  </h1>  
+</button>
+
                       {expandedRoleId === role.role_id ? (
                         <ChevronUp size={18} className="text-ibmblue" />
                       ) : (
@@ -692,6 +843,9 @@ const Profile = () => {
                     placeholderText="Select a target date"
                     dateFormat="yyyy-MM-dd"
                     minDate={new Date()}
+                    showYearDropdown
+  showMonthDropdown
+  dropdownMode="select"
                   />
                 </div>
                 {editForm.target_timeline &&
@@ -736,7 +890,7 @@ const Profile = () => {
 
             <div className="space-y-4">
               <div>
-                <div>
+                {/* <div>
                   <label className="block text-sm font-medium mb-1">
                     Select Target Role
                   </label>
@@ -752,7 +906,7 @@ const Profile = () => {
                       </option>
                     ))}
                   </select>
-                </div>
+                </div> */}
 
                 <label className="block text-sm font-medium mb-1">
                   Enter Skill
@@ -765,7 +919,7 @@ const Profile = () => {
                     className="flex-1 border border-gray-300 rounded px-3 py-2"
                     placeholder="Type a skill"
                   />
-                  <button
+                  {/* <button
                     type="button"
                     onClick={() => {
                       if (!skillInput.trim()) return;
@@ -790,13 +944,13 @@ const Profile = () => {
                     }}
                     className="bg-ibmblue text-white px-4 py-2 rounded hover:bg-blue-700 transition"
                   >
-                    Add
-                  </button>
+                    Add Skill
+                  </button> */}
                 </div>
               </div>
 
               {/* Preview tags */}
-              {newSkills.length > 0 && (
+              {/* {newSkills.length > 0 && (
                 <div className="flex flex-wrap gap-2 text-sm">
                   {newSkills.map((skill, idx) => (
                     <span
@@ -807,7 +961,7 @@ const Profile = () => {
                     </span>
                   ))}
                 </div>
-              )}
+              )} */}
 
               <div className="flex justify-end gap-3 pt-4">
                 <button
@@ -824,7 +978,7 @@ const Profile = () => {
                   className="btn bg-ibmblue text-white"
                   onClick={saveSkills}
                 >
-                  Save
+                  Add
                 </button>
               </div>
             </div>
