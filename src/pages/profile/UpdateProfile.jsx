@@ -14,6 +14,8 @@ const UpdateProfile = () => {
   const [bandLevel, setBandLevel] = useState('');
   const [department, setDepartment] = useState('');
   const [targetRole, setTargetRole] = useState('');
+  const [accountType, setAccountType] = useState("USER");
+
   const [loading, setLoading] = useState(false);
 
   const [errors, setErrors] = useState({
@@ -72,6 +74,7 @@ if (!allowedBands.includes(bandLevel)) {
         band_level: parseInt(bandLevel, 10),
         department: department.trim(),
         target_role: targetRole.trim(),
+        accountType
       };
 
     const res =  await createUser(payload);
@@ -196,6 +199,25 @@ if (!allowedBands.includes(bandLevel)) {
             <p className="text-red-600 mt-1 text-sm">{errors.email}</p>
           )}
         </div>
+
+        {/* Are you a manager? */}
+<div className="flex items-center justify-between mt-4">
+  <label className="text-gray-700 font-medium">Are you a manager?</label>
+
+  <div
+    className={`w-14 h-7 flex items-center rounded-full p-1 cursor-pointer transition 
+    ${accountType === "ADMIN" ? "bg-ibmblue" : "bg-gray-300"}`}
+    onClick={() =>
+      setAccountType(accountType === "ADMIN" ? "USER" : "ADMIN")
+    }
+  >
+    <div
+      className={`bg-white w-5 h-5 rounded-full shadow-md transform transition 
+      ${accountType === "ADMIN" ? "translate-x-7" : ""}`}
+    ></div>
+  </div>
+</div>
+
 
         <button
           type="submit"
