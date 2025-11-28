@@ -162,19 +162,37 @@ useEffect(() => {
   }
 };
 
-  const handleQuestionSave = async (isDraft) => {
+ const handleQuestionSave = async (isDraft) => {
     const plain = editContent.replace(/<[^>]+>/g, "").trim();
-    if (editTitle.trim().length < 10 || editTitle.trim().length > 150) {
-      toastError("Title must be between 10 and 150 characters.");
-      return;
-    }
-    if (editTags.length < 1 || editTags.length > 5) {
-      toastError("Must have 1 to 5 tags.");
-      return;
-    }
-    if (plain.length < 50) {
-      toastError("Content must be at least 50 characters.");
-      return;
+    
+    // Lenient validation for drafts
+    if (isDraft) {
+      if (!editTitle.trim()) {
+        toastError("Title cannot be empty.");
+        return;
+      }
+      if (editTags.length === 0) {
+        toastError("Tags cannot be empty.");
+        return;
+      }
+      if (!plain) {
+        toastError("Content cannot be empty.");
+        return;
+      }
+    } else {
+      // Strict validation for publishing
+      if (editTitle.trim().length < 10 || editTitle.trim().length > 150) {
+        toastError("Title must be between 10 and 150 characters.");
+        return;
+      }
+      if (editTags.length < 1 || editTags.length > 5) {
+        toastError("Must have 1 to 5 tags.");
+        return;
+      }
+      if (plain.length < 50) {
+        toastError("Content must be at least 50 characters.");
+        return;
+      }
     }
 
     try {
@@ -187,7 +205,7 @@ useEffect(() => {
         userId: user.id,
       };
       await updateQuestion(question.id, payload);
-      toastSuccess("Question updated");
+      toastSuccess(isDraft ? "Draft saved" : "Question published");
       setIsEditingQuestion(false);
       fetchQuestion();
     } catch (err) {
