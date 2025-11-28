@@ -31,6 +31,7 @@ const Home = () => {
   const skillsRef = useRef(null);
 
  useEffect(() => {
+    if (!profile?.id) return; 
   const fetchDashboard = async () => {
     try {
       const res = await getDashboard(profile.id);
@@ -57,14 +58,17 @@ const Home = () => {
 }, [profile]);
 
 
-  useEffect(() => {
-    const fetchBadges = async () => {
-      const res = await getUserBadges(profile.id);
+ useEffect(() => {
+  if (!profile?.id) return;     // <-- FIX
+  
+  const fetchBadges = async () => {
+    const res = await getUserBadges(profile.id);
+    setBadges(res);
+  };
 
-      setBadges(res);
-    };
-    fetchBadges();
-  }, [profile.id]);
+  fetchBadges();
+}, [profile?.id]);
+
 
   useEffect(() => {
     if (selectedRole) {
