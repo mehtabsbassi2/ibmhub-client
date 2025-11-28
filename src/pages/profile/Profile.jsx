@@ -1,3 +1,5 @@
+
+
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { getProfile, setProfile } from "../../redux/userSlice";
@@ -59,9 +61,7 @@ const Profile = () => {
   const profile = useSelector(getProfile);
   const [skills, setSkills] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [loadRoles, setLoadRoles] = useState(true);
   const [isAddTargetRole, setIsAddTargetRole] = useState(false);
-  const [targetRoles, setTargetRoles] = useState([]);
   const [newRole, setNewRole] = useState("");
   const [newTimeline, setNewTimeline] = useState(null);
 
@@ -70,28 +70,27 @@ const Profile = () => {
 
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isAddSkill, setIsAddSkill] = useState(false);
-  const [newSkills, setNewSkills] = useState([]);
   const [skillInput, setSkillInput] = useState("");
   const [qaActivity, setQActivity] = useState([]);
   const [selectedRoleId, setSelectedRoleId] = useState("");
   const [rolesWithSkills, setRolesWithSkills] = useState([]);
   const [loadingRolesWithSkills, setLoadingRolesWithSkills] = useState(true);
   const [expandedRoleId, setExpandedRoleId] = useState(null);
-    const [isUpdatingRole, setIsUpdatingRole] = useState(false);
-    const [badges,setBadges]=useState([])
-
+  const [isUpdatingRole, setIsUpdatingRole] = useState(false);
+  const [badges, setBadges] = useState([]);
 
   const [editForm, setEditForm] = useState({
     name: profile.name || "",
     band_level: profile.band_level || "",
     job_title: profile.job_title || "",
     department: profile.department || "",
-    target_role: targetRoles.length > 0 ? targetRoles[0].role_name : "",
+    target_role: "",
     target_timeline: profile.target_timeline
       ? new Date(profile.target_timeline)
       : null,
     email: profile.email,
   });
+
   const handleEditChange = (e) => {
     setEditForm({ ...editForm, [e.target.name]: e.target.value });
   };
@@ -104,7 +103,6 @@ const Profile = () => {
         toastSuccess("Updated Successfully!");
         setIsEditOpen(false);
         dispatch(setProfile(res.data));
-        //window.location.reload(); // or trigger a re-fetch
       } else {
         toastError("An error occured, try again!!");
       }
@@ -113,56 +111,22 @@ const Profile = () => {
     }
   };
 
-    useEffect(() => {
-      const fetchBadges = async () => {
-        const res = await getUserBadges(profile.id);
-  
-        setBadges(res);
-      };
-      fetchBadges();
-    }, [profile.id]);
+  useEffect(() => {
+    const fetchBadges = async () => {
+      const res = await getUserBadges(profile.id);
+      setBadges(res);
+    };
+    fetchBadges();
+  }, [profile.id]);
 
   useEffect(() => {
-    if (targetRoles.length > 0 && !editForm.target_role) {
+    if (rolesWithSkills.length > 0 && !editForm.target_role) {
       setEditForm((prev) => ({
         ...prev,
-        target_role: targetRoles[0].role_name,
+        target_role: rolesWithSkills[0].role_name,
       }));
     }
-  }, [targetRoles]);
-
-
-const handleToggleAccountType = async () => {
-  if (!profile?.id) return toastError("User not loaded");
-
-  try {
-    setIsUpdatingRole(true);
-
-    const res = await toogleAddmin(profile.id);
-    console.log("Admin toggle", res);
-
-    if (!res || !res.user) throw new Error("Failed to toggle account type");
-
-    setProfile((prev) => ({
-      ...prev,
-      accountType: res.user.accountType,
-    }));
-
-    toastSuccess(`Account type switched to ${res.user.accountType}`);
-
-    // ✅ Reload page after a short delay to reflect updated data
-    setTimeout(() => {
-      window.location.reload();
-    }, 1000);
-  } catch (err) {
-    console.error(err);
-    toastError("Error updating account type");
-  } finally {
-    setIsUpdatingRole(false);
-  }
-};
-
-
+  }, [rolesWithSkills]);
 
   const refetchRolesWithSkills = async () => {
     try {
@@ -183,23 +147,6 @@ const handleToggleAccountType = async () => {
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   };
 
-  // useEffect(() => {
-  //   const fetchData = async () => {
-  //     try {
-  //       setLoading(true);
-  //       const response = await getUserSkills(profile.id);
-  //       const skills = response || [];
-  //       setSkills(skills);
-  //     } catch (err) {
-  //       console.error("Failed to load career data", err);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-
-  //   if (profile?.id) fetchData();
-  // }, [profile]);
-
   const technicalSkills = skills.filter(
     (s) => !["communication", "leadership"].includes(s.skill_name.toLowerCase())
   );
@@ -214,7 +161,7 @@ const handleToggleAccountType = async () => {
 
         const activityMap = {};
         const addActivity = (isoDate) => {
-          const date = isoDate.split("T")[0]; // Format: YYYY-MM-DD
+          const date = isoDate.split("T")[0];
           activityMap[date] = (activityMap[date] || 0) + 1;
         };
 
@@ -254,25 +201,6 @@ const handleToggleAccountType = async () => {
     if (profile?.id) fetchRolesWithSkills();
   }, [profile?.id]);
 
-  useEffect(() => {
-    const fetchUserTargetRoles = async () => {
-      try {
-        setLoadRoles(true);
-        const roles = await getUserTargetRoles(profile.id);
-        console.log("Roles", roles);
-        setTargetRoles(roles);
-      } catch (error) {
-        console.error("Error loading target roles", error);
-      } finally {
-        setLoadRoles(false);
-      }
-    };
-
-    if (profile?.id) {
-      fetchUserTargetRoles();
-    }
-  }, [profile?.id]);
-
   const saveNewRole = async () => {
     try {
       const res = await addUserTargetRole({
@@ -283,7 +211,8 @@ const handleToggleAccountType = async () => {
       console.log("Res add", res);
       if (res.status === 201) {
         toastSuccess("Target role added!");
-        setTargetRoles((prev) => [...prev, res.data]);
+        // Refetch the roles with skills to update the UI immediately
+        await refetchRolesWithSkills();
       } else {
         toastError("Failed to add role.");
       }
@@ -296,92 +225,59 @@ const handleToggleAccountType = async () => {
     }
   };
 
- const saveSkills = async () => {
-  if (!selectedRoleId) {
-    toastError("Please select a target role first.");
-    return;
-  }
-
-  const entered = skillInput.trim();
-  if (!entered) return;
-
-  const allExisting = rolesWithSkills.flatMap((r) =>
-    (r.skills || []).map((s) => s.skill_name.toLowerCase())
-  );
-
-  if (allExisting.includes(entered.toLowerCase())) {
-    toastError("Skill already exists.");
-    return;
-  }
-
-  try {
-    // ✅ Directly use entered skill instead of waiting for setNewSkills
-    const res = await addUserSkills({
-      authorId: profile.id,
-      targetRoleId: selectedRoleId,
-      skillNames: [entered], // send immediately
-    });
-
-    if (res.status === 201) {
-      toastSuccess("Skill added successfully!");
-      await refetchRolesWithSkills(); // refresh UI
-    } else {
-      toastError("Failed to add skill.");
+  const saveSkills = async () => {
+    if (!selectedRoleId) {
+      toastError("Please select a target role first.");
+      return;
     }
-  } catch (err) {
-    console.error(err);
-    toastError("Something went wrong.");
-  } finally {
-    // ✅ Reset states safely
-    setIsAddSkill(false);
-    setNewSkills([]);
-    setSkillInput("");
-    setSelectedRoleId("");
-  }
-};
 
+    const entered = skillInput.trim();
+    if (!entered) return;
+
+    const allExisting = rolesWithSkills.flatMap((r) =>
+      (r.skills || []).map((s) => s.skill_name.toLowerCase())
+    );
+
+    if (allExisting.includes(entered.toLowerCase())) {
+      toastError("Skill already exists.");
+      return;
+    }
+
+    try {
+      const res = await addUserSkills({
+        authorId: profile.id,
+        targetRoleId: selectedRoleId,
+        skillNames: [entered],
+      });
+
+      if (res.status === 201) {
+        toastSuccess("Skill added successfully!");
+        await refetchRolesWithSkills();
+      } else {
+        toastError("Failed to add skill.");
+      }
+    } catch (err) {
+      console.error(err);
+      toastError("Something went wrong.");
+    } finally {
+      setIsAddSkill(false);
+      setSkillInput("");
+      setSelectedRoleId("");
+    }
+  };
 
   const safeQaActivity = Array.isArray(qaActivity) ? qaActivity : [];
+
   return (
     <div className="p-6 bg-ibmlight min-h-screen">
       <div className="bg-white p-6 rounded shadow space-y-6">
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold text-ibmblue flex items-center gap-2">
-          <UserCheck size={22} /> Career Profile
-        </h1>
-        <div className="flex items-center gap-4 mt-6 pr-10">
-  <span className="font-semibold text-gray-700">
-    {profile?.accountType || "USER"}
-  </span>
-
-  <button
-    onClick={handleToggleAccountType}
-    disabled={isUpdatingRole}
-    className={`relative inline-flex h-6 w-12 items-center rounded-full transition-colors ${
-      profile?.accountType === "ADMIN"
-        ? "bg-ibmblue"
-        : "bg-gray-300"
-    }`}
-  >
-    <span
-      className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
-        profile?.accountType === "ADMIN"
-          ? "translate-x-6"
-          : "translate-x-1"
-      }`}
-    />
-  </button>
-
-  {isUpdatingRole && (
-    <span className="text-sm text-gray-500">Updating...</span>
-  )}
-</div>
-
+            <UserCheck size={22} /> Career Profile
+          </h1>
         </div>
-        
 
         <div className="flex flex-col items-center gap-20 ">
-          {/* Career Details */}
           <div className="w-full h-full relative">
             <div className="w-full h-full space-y-2 text-gray-800 text-sm flex flex-col justify-evenly">
               <p>
@@ -400,12 +296,8 @@ const handleToggleAccountType = async () => {
                 <Building2 size={14} className="inline mr-1 text-ibmblue" />
                 <strong>Department:</strong> {profile.department}
               </p>
-              <p className="hidden">
-                <Target size={14} className="inline mr-1 text-ibmblue" />
-                <strong>Target Role:</strong> {profile.target_role}
-              </p>
             </div>
-            <div className="absolute right-15 top-5">
+            <div className="absolute right-15 top-0">
               <Pencil
                 size={24}
                 className="text-ibmblue cursor-pointer"
@@ -414,6 +306,7 @@ const handleToggleAccountType = async () => {
             </div>
           </div>
         </div>
+
         <section>
           <p>
             <CalendarClock size={14} className="inline mr-1 text-ibmblue" />
@@ -425,118 +318,45 @@ const handleToggleAccountType = async () => {
         </section>
 
         {/* 🏅 User Badges */}
-<section className="mt-6">
-  <h2 className="text-lg font-semibold text-ibmblue flex items-center gap-2">
-    <UserCheck size={18} /> Career Badges
-  </h2>
-
-  {!badges || badges.length === 0 ? (
-    <p className="text-gray-500 mt-2">No badges earned yet.</p>
-  ) : (
-    <div className="flex flex-wrap gap-3 mt-3 bg-white border border-ibmblue p-4 rounded-xl mr-8">
-      {badges.map((badge) => (
-        <div
-          key={badge.id}
-          className="px-3 py-1 rounded-full text-xs font-semibold shadow-sm flex items-center gap-2"
-          style={{
-            backgroundColor: badge.color || "#1f70c1",
-            color: "#fff",
-          }}
-        >
-            {/* Badge Image */}
-          {badge.image && (
-            <img
-              src={badge.image}
-              alt={badge.name}
-              className="w-5 h-5 rounded-full object-cover"
-            />
-          )}
-
-          {/* Badge Name */}
-          <span>{badge.name}</span>
-        </div>
-      ))}
-    </div>
-  )}
-</section>
-
-
         <section className="mt-6">
-          <div className="flex justify-between items-center pr-10">
-            <h2 className="text-lg font-semibold text-ibmblue flex items-center gap-2">
-              <Target size={18} className="text-ibmblue" /> Target Roles
-            </h2>
-            <div onClick={() => setIsAddTargetRole(true)} className="flex items-center">
-              <h1>Add Target Role</h1>
-              <Plus
-              size={24}
-              className="text-ibmblue cursor-pointer"
-              
-            />
-            </div>
-            
-          </div>
+          <h2 className="text-lg font-semibold text-ibmblue flex items-center gap-2">
+            <UserCheck size={18} /> Career Badges
+          </h2>
 
-          {loadRoles ? (
-            <div className="flex justify-center p-6">
-              <span className="loading loading-bars loading-xl text-ibmblue"></span>
-            </div>
+          {!badges || badges.length === 0 ? (
+            <p className="text-gray-500 mt-2">No badges earned yet.</p>
           ) : (
-            <div className="bg-white mr-8  rounded-xl  space-y-4 mt-4">
-              {targetRoles.length === 0 ? (
-                <p>No roles set</p>
-              ) : (
-                <ul className="border p-4 rounded-xl border-ibmblue divide-y divide-gray-200">
-                  {targetRoles.map((role) => (
-                    <li
-                      key={role.id}
-                      className="flex items-center justify-between py-3 px-1 rounded hover:bg-gray-50 transition"
-                    >
-                      <span className="text-sm font-medium text-gray-700 capitalize">
-                        {role.role_name}{" "}
-                        {role.timeline && (
-                          <span className="text-xs text-gray-500">
-                            (by {new Date(role.timeline).toLocaleDateString()})
-                          </span>
-                        )}
-                      </span>
-                      <button
-                        onClick={async () => {
-                          try {
-                            const res = await deleteUserTargetRole(role.id);
-                            console.log("Deleted Role", res);
-                            if (res.status === 200) {
-                              toastSuccess(res.data.message);
-                              setTargetRoles((prev) =>
-                                prev.filter((r) => r.id !== role.id)
-                              );
-                            } else {
-                              toastError("Delete failed.");
-                            }
-                          } catch (err) {
-                            toastError("Server error.");
-                          }
-                        }}
-                        className="text-red-500 hover:text-red-600 transition"
-                        title="Remove role"
-                      >
-                        <X size={20} />
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
+            <div className="flex flex-wrap gap-3 mt-3 bg-white border border-ibmblue p-4 rounded-xl mr-8">
+              {badges.map((badge) => (
+                <div
+                  key={badge.id}
+                  className="px-3 py-1 rounded-full text-xs font-semibold shadow-sm flex items-center gap-2"
+                  style={{
+                    backgroundColor: badge.color || "#1f70c1",
+                    color: "#fff",
+                  }}
+                >
+                  {badge.image && (
+                    <img
+                      src={badge.image}
+                      alt={badge.name}
+                      className="w-5 h-5 rounded-full object-cover"
+                    />
+                  )}
+                  <span>{badge.name}</span>
+                </div>
+              ))}
             </div>
           )}
         </section>
 
-        {/* 🎯 Target Roles with Skills Section */}
+        {/* 🎯 CONSOLIDATED Target Roles with Skills Section */}
         <section className="mt-8">
           <div className="flex justify-between items-center pr-10">
             <h2 className="text-lg font-semibold text-ibmblue flex items-center gap-2">
-              <Target size={18} className="text-ibmblue" /> Target Roles with
-              Skills
+              <Target size={18} className="text-ibmblue" /> Target Roles & Skills
             </h2>
+           
           </div>
 
           {loadingRolesWithSkills ? (
@@ -544,14 +364,25 @@ const handleToggleAccountType = async () => {
               <span className="loading loading-bars loading-xl text-ibmblue"></span>
             </div>
           ) : rolesWithSkills.length === 0 ? (
-            <p className="text-gray-500 mt-2">
-              No target roles with skills yet.
+            <div>
+               <p className="text-gray-500 mt-2">
+              No target roles yet. Click "Add Target Role" to get started.
             </p>
+             <div
+              onClick={() => setIsAddTargetRole(true)}
+              className="flex w-[150px] p-2 rounded mt-5 border border-ibmblue items-center cursor-pointer hover:opacity-80 transition"
+            >
+              <h1 className="text-sm">Add Target Role</h1>
+              <Plus size={24} className="text-ibmblue" />
+            </div>
+            </div>
+           
           ) : (
+            <>
             <div className="mt-4 bg-white border border-ibmblue rounded-xl p-4 space-y-4 mr-8">
               {rolesWithSkills.map((role) => (
                 <div
-                  key={role.role_id}
+                  key={role.id}
                   className="border border-gray-200 rounded-lg"
                 >
                   {/* Accordion Header */}
@@ -559,7 +390,7 @@ const handleToggleAccountType = async () => {
                     className="flex items-center justify-between p-3 cursor-pointer bg-gray-50 hover:bg-gray-100 rounded-t-lg transition"
                     onClick={() =>
                       setExpandedRoleId(
-                        expandedRoleId === role.role_id ? null : role.role_id
+                        expandedRoleId === role.id ? null : role.id
                       )
                     }
                   >
@@ -575,31 +406,39 @@ const handleToggleAccountType = async () => {
                       )}
                     </div>
                     <div className="flex items-center gap-3">
-                      {/* <Plus
-                        size={18}
-                        className="text-ibmblue cursor-pointer"
-                        title="Add Skill"
+                      <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          setSelectedRoleId(role.role_id);
+                          setSelectedRoleId(role.id);
                           setIsAddSkill(true);
                         }}
-                      /> */}
-                      <button
-  onClick={(e) => {
-    e.stopPropagation();
-    console.log("setroleid",role)
-    setSelectedRoleId(role.id);
-    setIsAddSkill(true);
-  }}
-  className="text-ibmblue text-sm font-medium hover:underline"
->
-<h1 className="flex items-center mr-4">
-  Add Skill <Plus size={16}/>
-  </h1>  
-</button>
+                        className="text-ibmblue text-sm font-medium hover:underline flex items-center gap-1"
+                      >
+                        Add Skill <Plus size={16} />
+                      </button>
 
-                      {expandedRoleId === role.role_id ? (
+                      <button
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          try {
+                            const res = await deleteUserTargetRole(role.id);
+                            if (res.status === 200) {
+                              toastSuccess(res.data.message);
+                              await refetchRolesWithSkills();
+                            } else {
+                              toastError("Delete failed.");
+                            }
+                          } catch (err) {
+                            toastError("Server error.");
+                          }
+                        }}
+                        className="text-red-500 hover:text-red-600 transition"
+                        title="Remove role"
+                      >
+                        <X size={20} />
+                      </button>
+
+                      {expandedRoleId === role.id ? (
                         <ChevronUp size={18} className="text-ibmblue" />
                       ) : (
                         <ChevronDown size={18} className="text-ibmblue" />
@@ -608,7 +447,7 @@ const handleToggleAccountType = async () => {
                   </div>
 
                   {/* Accordion Body */}
-                  {expandedRoleId === role.role_id && (
+                  {expandedRoleId === role.id && (
                     <div className="p-4 bg-white border-t border-gray-200 rounded-b-lg">
                       {role.skills && role.skills.length > 0 ? (
                         <div className="flex flex-wrap gap-2 mt-2">
@@ -642,7 +481,7 @@ const handleToggleAccountType = async () => {
                         </div>
                       ) : (
                         <p className="text-sm text-gray-500 ml-6">
-                          No skills linked yet.
+                          No skills linked yet. Click "Add Skill" to add your first skill.
                         </p>
                       )}
                     </div>
@@ -650,16 +489,24 @@ const handleToggleAccountType = async () => {
                 </div>
               ))}
             </div>
+             <div
+              onClick={() => setIsAddTargetRole(true)}
+              className="flex w-[150px] p-2 rounded mt-5 border border-ibmblue items-center cursor-pointer hover:opacity-80 transition"
+            >
+              <h1 className="text-sm">Add Target Role</h1>
+              <Plus size={24} className="text-ibmblue" />
+            </div>
+            </>
+            
           )}
         </section>
 
-        <section className="bg-white rounded-lg  p-6  mt-6 text-xs">
+        <section className="bg-white rounded-lg p-6 mt-6 text-xs">
           <ActivityHeatmap data={safeQaActivity} />
         </section>
-
-        {/* 🗣️ Recent Q&A Activity */}
       </div>
 
+      {/* Add Target Role Modal */}
       {isAddTargetRole && (
         <div className="fixed inset-0 z-50 bg-black/30 flex items-center justify-center">
           <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
@@ -700,6 +547,9 @@ const handleToggleAccountType = async () => {
                   placeholderText="Select a target date"
                   dateFormat="yyyy-MM-dd"
                   minDate={new Date()}
+                  showYearDropdown
+                  showMonthDropdown
+                  dropdownMode="select"
                 />
               </div>
 
@@ -726,6 +576,7 @@ const handleToggleAccountType = async () => {
         </div>
       )}
 
+      {/* Edit Profile Modal */}
       {isEditOpen && (
         <div className="fixed inset-0 z-50 bg-black/30 flex items-center justify-center">
           <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-lg">
@@ -785,7 +636,7 @@ const handleToggleAccountType = async () => {
                   className="w-full flex-1 border border-gray-300 rounded-lg px-3 py-2"
                 >
                   <option value="">-- Select Target Role --</option>
-                  {targetRoles.map((role) => (
+                  {rolesWithSkills.map((role) => (
                     <option key={role.id} value={role.role_name}>
                       {role.role_name}
                     </option>
@@ -844,15 +695,15 @@ const handleToggleAccountType = async () => {
                     dateFormat="yyyy-MM-dd"
                     minDate={new Date()}
                     showYearDropdown
-  showMonthDropdown
-  dropdownMode="select"
+                    showMonthDropdown
+                    dropdownMode="select"
                   />
                 </div>
                 {editForm.target_timeline &&
                   daysUntil(editForm.target_timeline) < 90 && (
                     <p className="text-yellow-400 text-sm mt-1">
                       The date you have set seems quite close, try a date
-                      further away. Remember, there’s no rush when it comes to
+                      further away. Remember, there's no rush when it comes to
                       achieving your goals!
                     </p>
                   )}
@@ -875,11 +726,12 @@ const handleToggleAccountType = async () => {
         </div>
       )}
 
+      {/* Add Skill Modal */}
       {isAddSkill && (
         <div className="fixed inset-0 z-50 bg-black/30 flex items-center justify-center">
           <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-ibmblue">Add Skills</h3>
+              <h3 className="text-lg font-semibold text-ibmblue">Add Skill</h3>
               <button
                 onClick={() => setIsAddSkill(false)}
                 className="text-gray-500 text-2xl"
@@ -890,24 +742,6 @@ const handleToggleAccountType = async () => {
 
             <div className="space-y-4">
               <div>
-                {/* <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Select Target Role
-                  </label>
-                  <select
-                    value={selectedRoleId}
-                    onChange={(e) => setSelectedRoleId(e.target.value)}
-                    className="w-full border border-gray-300 rounded px-3 py-2"
-                  >
-                    <option value="">-- Select a Role --</option>
-                    {targetRoles.map((role) => (
-                      <option key={role.id} value={role.id}>
-                        {role.role_name}
-                      </option>
-                    ))}
-                  </select>
-                </div> */}
-
                 <label className="block text-sm font-medium mb-1">
                   Enter Skill
                 </label>
@@ -919,56 +753,14 @@ const handleToggleAccountType = async () => {
                     className="flex-1 border border-gray-300 rounded px-3 py-2"
                     placeholder="Type a skill"
                   />
-                  {/* <button
-                    type="button"
-                    onClick={() => {
-                      if (!skillInput.trim()) return;
-
-                      const entered = skillInput.trim().toLowerCase();
-
-                      const allExisting = rolesWithSkills.flatMap((r) =>
-                        (r.skills || []).map((s) => s.skill_name.toLowerCase())
-                      );
-                      const existingSkills = [
-                        ...allExisting,
-                        ...newSkills.map((s) => s.toLowerCase()),
-                      ];
-
-                      if (existingSkills.includes(entered)) {
-                        toastError("Skill already exists.");
-                      } else {
-                        setNewSkills([...newSkills, skillInput.trim()]);
-                      }
-
-                      setSkillInput("");
-                    }}
-                    className="bg-ibmblue text-white px-4 py-2 rounded hover:bg-blue-700 transition"
-                  >
-                    Add Skill
-                  </button> */}
                 </div>
               </div>
-
-              {/* Preview tags */}
-              {/* {newSkills.length > 0 && (
-                <div className="flex flex-wrap gap-2 text-sm">
-                  {newSkills.map((skill, idx) => (
-                    <span
-                      key={idx}
-                      className="bg-ibmblue text-white px-2 py-1 rounded-full"
-                    >
-                      {skill}
-                    </span>
-                  ))}
-                </div>
-              )} */}
 
               <div className="flex justify-end gap-3 pt-4">
                 <button
                   className="btn"
                   onClick={() => {
                     setIsAddSkill(false);
-                    setNewSkills([]);
                     setSkillInput("");
                   }}
                 >
