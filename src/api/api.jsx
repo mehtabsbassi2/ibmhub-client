@@ -62,6 +62,15 @@ export const addUserTargetRole = async(data)=>{
         console.log("Failed to add user roles",error)
     }
 }
+
+export const updateUserTargetRole =async (id,payload)=>{
+    try {
+        const res = await api.put(`/target-roles/${id}`,payload)
+        return res
+    } catch (error) {
+        console.log("Failed to update target role",error)
+    }
+}
  export const getUserTargetRoles = async (id)=>{
     try {
        const res = await api.get(`/target-roles/${id}`) 
