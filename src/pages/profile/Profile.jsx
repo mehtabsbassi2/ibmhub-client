@@ -42,6 +42,7 @@ import {
   getUserTargetRolesWithUserSkills,
   toogleAddmin,
   updateProfile,
+  updateUserTargetRole,
 } from "../../api/api";
 import { toastError, toastSuccess } from "../../components/Toastify";
 import "react-datepicker/dist/react-datepicker.css";
@@ -68,6 +69,7 @@ const Profile = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
+
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isAddSkill, setIsAddSkill] = useState(false);
   const [skillInput, setSkillInput] = useState("");
@@ -78,6 +80,12 @@ const Profile = () => {
   const [expandedRoleId, setExpandedRoleId] = useState(null);
   const [isUpdatingRole, setIsUpdatingRole] = useState(false);
   const [badges, setBadges] = useState([]);
+
+    // NEW: State for editing target role
+  const [isEditTargetRole, setIsEditTargetRole] = useState(false);
+  const [editingRoleId, setEditingRoleId] = useState(null);
+  const [editRoleName, setEditRoleName] = useState("");
+  const [editRoleTimeline, setEditRoleTimeline] = useState(null);
 
   const [editForm, setEditForm] = useState({
     name: profile.name || "",
@@ -225,6 +233,47 @@ const Profile = () => {
     }
   };
 
+   // NEW: Function to handle editing target role
+  const handleEditTargetRole = (role) => {
+    console.log("Role",role)
+    setEditingRoleId(role.id);
+    setEditRoleName(role.role_name);
+    setEditRoleTimeline(role.timeline ? new Date(role.timeline) : null);
+    setIsEditTargetRole(true);
+  };
+
+  // NEW: Function to save edited target role
+  const saveEditedRole = async () => {
+    if (!editRoleName.trim()) {
+      toastError("Role name cannot be empty.");
+      return;
+    }
+
+    try {
+      const res = await updateUserTargetRole(editingRoleId, {
+        role_name: editRoleName,
+        timeline: editRoleTimeline,
+      });
+
+      console.log("editrES",res)
+
+      if (res.status === 200) {
+        toastSuccess("Target role updated successfully!");
+        await refetchRolesWithSkills();
+      } else {
+        toastError("Failed to update role.");
+      }
+    } catch (err) {
+      console.error(err);
+      toastError("Something went wrong.");
+    } finally {
+      setIsEditTargetRole(false);
+      setEditingRoleId(null);
+      setEditRoleName("");
+      setEditRoleTimeline(null);
+    }
+  };
+
   const saveSkills = async () => {
     if (!selectedRoleId) {
       toastError("Please select a target role first.");
@@ -296,6 +345,7 @@ const Profile = () => {
                 <Building2 size={14} className="inline mr-1 text-ibmblue" />
                 <strong>Department:</strong> {profile.department}
               </p>
+              
             </div>
             <div className="absolute right-15 top-0">
               <Pencil
@@ -307,7 +357,7 @@ const Profile = () => {
           </div>
         </div>
 
-        <section>
+        {/* <section>
           <p>
             <CalendarClock size={14} className="inline mr-1 text-ibmblue" />
             <strong>Target Timeline:</strong>{" "}
@@ -315,7 +365,7 @@ const Profile = () => {
               ? new Date(profile.target_timeline).toLocaleDateString()
               : "Not set"}
           </p>
-        </section>
+        </section> */}
 
         {/* 🏅 User Badges */}
         <section className="mt-6">
@@ -406,6 +456,11 @@ const Profile = () => {
                       )}
                     </div>
                     <div className="flex items-center gap-3">
+                      {/* when clicked, open edit target role modal */}
+                      <div className="text-ibmblue text-sm font-medium hover:underline flex items-center mr-3">
+                         <Pencil onClick={()=>handleEditTargetRole(role)} />
+                      </div>
+                     
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -553,6 +608,14 @@ const Profile = () => {
                 />
               </div>
 
+                 { daysUntil(newTimeline) < 90 && (
+                    <p className="text-yellow-400 text-sm mt-1">
+                      The date you have set seems quite close, try a date
+                      further away. Remember, there's no rush when it comes to
+                      achieving your goals!
+                    </p>
+                  )}
+
               <div className="flex justify-end gap-3 pt-4">
                 <button
                   className="btn"
@@ -569,6 +632,84 @@ const Profile = () => {
                   onClick={saveNewRole}
                 >
                   Save
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+         {/* NEW: Edit Target Role Modal */}
+      {isEditTargetRole && (
+        <div className="fixed inset-0 z-50 bg-black/30 flex items-center justify-center">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-ibmblue">
+                Edit Target Role
+              </h3>
+              <button
+                onClick={() => setIsEditTargetRole(false)}
+                className="text-gray-500 text-2xl"
+              >
+                &times;
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Role Name
+                </label>
+                <input
+                  type="text"
+                  value={editRoleName}
+                  onChange={(e) => setEditRoleName(e.target.value)}
+                  className="w-full border border-gray-300 rounded px-3 py-2"
+                  placeholder="e.g. Senior Developer"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Target Timeline
+                </label>
+                <DatePicker
+                  selected={editRoleTimeline}
+                  onChange={(date) => setEditRoleTimeline(date)}
+                  className="w-full border border-gray-300 rounded px-3 py-2"
+                  placeholderText="Select a target date"
+                  dateFormat="yyyy-MM-dd"
+                  minDate={new Date()}
+                  showYearDropdown
+                  showMonthDropdown
+                  dropdownMode="select"
+                />
+              </div>
+               { daysUntil(editRoleTimeline) < 90 && (
+                    <p className="text-yellow-400 text-sm mt-1">
+                      The date you have set seems quite close, try a date
+                      further away. Remember, there's no rush when it comes to
+                      achieving your goals!
+                    </p>
+                  )}
+
+              <div className="flex justify-end gap-3 pt-4">
+                <button
+                  className="btn"
+                  onClick={() => {
+                    setIsEditTargetRole(false);
+                    setEditingRoleId(null);
+                    setEditRoleName("");
+                    setEditRoleTimeline(null);
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="btn bg-ibmblue text-white"
+                  onClick={saveEditedRole}
+                >
+                  Save Changes
                 </button>
               </div>
             </div>
@@ -627,7 +768,7 @@ const Profile = () => {
                   className="w-full flex-1 border border-gray-300 rounded-lg px-3 py-2"
                 />
               </div>
-              <div>
+              {/* <div>
                 <label className="block text-sm font-medium">Target Role</label>
                 <select
                   name="target_role"
@@ -642,7 +783,7 @@ const Profile = () => {
                     </option>
                   ))}
                 </select>
-              </div>
+              </div> */}
 
               <div className="flex items-center gap-3">
                 <div className="w-full">
@@ -681,7 +822,7 @@ const Profile = () => {
                     ))}
                   </select>
                 </div>
-                <div className="w-full">
+                {/* <div className="w-full">
                   <label className="block text-sm font-medium">
                     Target Timeline
                   </label>
@@ -698,7 +839,7 @@ const Profile = () => {
                     showMonthDropdown
                     dropdownMode="select"
                   />
-                </div>
+                </div> */}
                 {editForm.target_timeline &&
                   daysUntil(editForm.target_timeline) < 90 && (
                     <p className="text-yellow-400 text-sm mt-1">
@@ -782,3 +923,5 @@ const Profile = () => {
 };
 
 export default Profile;
+
+
