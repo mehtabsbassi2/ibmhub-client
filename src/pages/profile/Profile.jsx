@@ -608,7 +608,7 @@ const Profile = () => {
                 />
               </div>
 
-                 { daysUntil(newTimeline) < 90 && (
+                 {newTimeline && daysUntil(newTimeline) < 90 && (
                     <p className="text-yellow-400 text-sm mt-1">
                       The date you have set seems quite close, try a date
                       further away. Remember, there's no rush when it comes to
@@ -685,7 +685,7 @@ const Profile = () => {
                   dropdownMode="select"
                 />
               </div>
-               { daysUntil(editRoleTimeline) < 90 && (
+               {editRoleTimeline && daysUntil(editRoleTimeline) < 90 && (
                     <p className="text-yellow-400 text-sm mt-1">
                       The date you have set seems quite close, try a date
                       further away. Remember, there's no rush when it comes to
