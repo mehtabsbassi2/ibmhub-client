@@ -762,7 +762,7 @@ const Profile = () => {
                 <input
                   type="text"
                   name="department"
-                  disabled
+    
                   value={editForm.department}
                   onChange={handleEditChange}
                   className="w-full flex-1 border border-gray-300 rounded-lg px-3 py-2"
