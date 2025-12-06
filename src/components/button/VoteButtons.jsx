@@ -4,10 +4,10 @@ import { useSelector } from "react-redux";
 import { getAuthUser } from "../../redux/userSlice";
 import { ArrowUp, ArrowDown, Loader2 } from "lucide-react";
 
-const VoteButtons = ({ itemId, itemType, currentVotes, userId }) => {
+const VoteButtons = ({ itemId, itemType, currentVotes, userId, initialUserVote = null,onVoteUpdate }) => {
   const user = useSelector(getAuthUser);
   const [votes, setVotes] = useState(currentVotes);
-  const [userVote, setUserVote] = useState(null);
+  const [userVote, setUserVote] = useState(initialUserVote);
   const [loadingUp, setLoadingUp] = useState(false);
   const [loadingDown, setLoadingDown] = useState(false);
 
@@ -28,14 +28,27 @@ const VoteButtons = ({ itemId, itemType, currentVotes, userId }) => {
         vote_type,
       };
 
-      const res = await castVote(payload); // res is already JSON
+      const res = await castVote(payload);
       console.log("Res:", res);
 
+      // Update state regardless of error or success
+      // Backend returns userVote and newVoteCount in both cases
+      if (res.newVoteCount !== undefined) {
+        setVotes(res.newVoteCount);
+      }
+      
+      if (res.userVote !== undefined) {
+        setUserVote(res.userVote);
+      }
+
+      if (onVoteUpdate) {
+  onVoteUpdate(res.newVoteCount, res.userVote);
+}
+
+
+      // Show error message if there is one (optional)
       if (res.error) {
         console.warn(res.error);
-      } else {
-        setVotes(res.newVoteCount);
-        setUserVote(res.userVote);
       }
     } catch (err) {
       console.error("Vote failed", err);
