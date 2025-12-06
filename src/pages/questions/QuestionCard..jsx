@@ -1,4 +1,4 @@
-import React from "react";
+import React,{useState} from "react";
 import { formatDistanceToNow } from "date-fns";
 import { Link } from "react-router-dom";
 import VoteButtons from "../../components/button/VoteButtons";
@@ -12,6 +12,10 @@ import {
 } from "lucide-react";
 
 const QuestionCard = ({ question, isDraft = false }) => {
+
+    const [votes, setVotes] = useState(question.votes);
+  const [userVote, setUserVote] = useState(question.userVote);
+
   const CardContent = (
     <div className="w-full overflow-hidden break-words bg-white rounded-lg p-4 transition hover:shadow-md">
       {/* Title and Solved status */}
@@ -81,7 +85,7 @@ const QuestionCard = ({ question, isDraft = false }) => {
         <div className="flex justify-between text-sm text-gray-600">
           <div className="flex gap-4 items-center flex-wrap">
             <span className="flex items-center gap-1">
-              <ThumbsUp size={14} className="text-ibmblue" /> {question.votes}
+              <ThumbsUp size={14} className="text-ibmblue" /> {votes}
             </span>
             <span className="flex items-center gap-1">
               <MessageCircle size={14} className="text-ibmblue" />{" "}
@@ -95,12 +99,20 @@ const QuestionCard = ({ question, isDraft = false }) => {
               {question.skill_points} pts
             </span>
             <div>
-              <VoteButtons
-                itemId={question.id}
-                itemType="question"
-                currentVotes={question.votes}
-                userId={question.authorId}
-              />
+             
+                  <VoteButtons
+              itemId={question.id}
+              itemType="question"
+              currentVotes={votes}
+              currentUserVote={userVote}
+              userId={question.authorId}
+              onVoteUpdate={(newVotes, newUserVote) => {
+                setVotes(newVotes);
+                setUserVote(newUserVote);
+              }}
+            />
+                
+              
             </div>
           </div>
           <div>
