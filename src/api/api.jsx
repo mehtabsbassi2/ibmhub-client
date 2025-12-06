@@ -182,9 +182,9 @@ export const getUserDraftQuestions = async (id,queryParams)=>{
         console.log("Failed to load questions by user id",error)
     }
 }
-export const getQuestionById = async (id)=>{
+export const getQuestionById = async (id,userId)=>{
     try {
-        const res = await api.get(`/questions/${id}`)
+        const res = await api.get(`/questions/${id}?userId=${userId}`)
         return res.data
     } catch (error) {
         console.log("Failed to load question by id")
