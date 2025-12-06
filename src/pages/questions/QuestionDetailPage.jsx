@@ -68,7 +68,9 @@ useEffect(() => {
 
   const fetchQuestion = async () => {
     try {
-      const res = await getQuestionById(id);
+      const userId = user?.id
+      const res = await getQuestionById(id,userId);
+      console.log("Question",res)
       setQuestion(res);
     } catch (error) {
       console.error("Failed to load question", error);
@@ -243,59 +245,63 @@ useEffect(() => {
                 className="w-full text-sm text-gray-800 border border-gray-300 px-3 py-2 rounded mb-4"
               />
             </div>
-
-            <TiptapEditor content={editContent} onChange={setEditContent} />
-
-            <div className="my-3">
-              <label className="block font-semibold text-lg mb-2">Tags *</label>
-              <div className="flex flex-wrap gap-2 mb-2">
-                {editTags.map((tag, index) => (
-                  <span
-                    key={index}
-                    className="flex items-center bg-gray-200 text-gray-800 px-2 py-1 rounded-full text-sm"
-                  >
-                    #{tag}
-                    <button
-                      className="ml-1"
-                      onClick={() =>
-                        setEditTags(editTags.filter((_, i) => i !== index))
-                      }
-                    >
-                      <X size={14} />
-                    </button>
-                  </span>
-                ))}
-              </div>
-              <div className="flex gap-2">
-                <input
-                  value={newTag}
-                  onChange={(e) => setNewTag(e.target.value)}
-                  placeholder="Add tag"
-                  className="border border-gray-300 rounded-lg px-3 py-2"
-                />
-                <button
-                  className="text-sm bg-ibmblue text-white px-3 py-1 rounded"
-                  onClick={() => {
-                    const trimmed = newTag.trim();
-                    if (
-                      trimmed &&
-                      /^[a-zA-Z0-9+&@#_-]+$/.test(trimmed) &&
-                      !editTags.includes(trimmed) &&
-                      editTags.length < 5 &&
-                      trimmed.length >= 2 &&
-                      trimmed.length <= 20
-                    ) {
-                      setEditTags([...editTags, trimmed]);
-                      setNewTag("");
-                    } else {
-                      toastError("Invalid or duplicate tag.");
-                    }
-                  }}
-                >
-                  Add
-                </button>
-              </div>
+            <div>
+              <label className="block font-semibold text-lg mb-2">Content *</label>
+               <TiptapEditor content={editContent} onChange={setEditContent} />
             </div>
+
+           
+
+
+<div className="my-3">
+  <label className="block font-semibold text-lg mb-2">Tags *</label>
+  <p className="text-sm text-gray-500 mb-2">Add up to 5 tags (2–20 alphanumeric characters).</p>
+  <div className="flex gap-2">
+    <input
+      value={newTag}
+      onChange={(e) => setNewTag(e.target.value)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const trimmed = newTag.trim();
+          if (
+            trimmed &&
+            /^[a-zA-Z0-9+&@#_-]+$/.test(trimmed) &&
+            !editTags.includes(trimmed) &&
+            editTags.length < 5 &&
+            trimmed.length >= 2 &&
+            trimmed.length <= 20
+          ) {
+            setEditTags([...editTags, trimmed]);
+            setNewTag("");
+          } else {
+            toastError("Invalid or duplicate tag.");
+          }
+        }
+      }}
+      placeholder="Type tag and press Enter"
+      className="border border-gray-300 rounded-lg px-3 py-2 flex-1"
+    />
+  </div>
+  <div className="flex flex-wrap gap-2 mt-2">
+    {editTags.map((tag, index) => (
+      <span
+        key={index}
+        className="flex items-center bg-gray-200 text-gray-800 px-2 py-1 rounded-full text-sm"
+      >
+        #{tag}
+        <button
+          className="ml-1"
+          onClick={() =>
+            setEditTags(editTags.filter((_, i) => i !== index))
+          }
+        >
+          <X size={14} />
+        </button>
+      </span>
+    ))}
+  </div>
+</div>
 
             <div className="mt-4 mb-2">
               <label className="block font-semibold text-lg mb-2">
@@ -304,7 +310,7 @@ useEffect(() => {
               <select
                 value={editDifficulty}
                 onChange={(e) => setEditDifficulty(e.target.value)}
-                className="w-[200px] border border-gray-300 p-3 rounded text-base"
+                className="w-full md:w-[60%] border border-gray-300 p-3 rounded text-base"
               >
                 {difficultyOptions.map((option) => (
                   <option key={option}>{option}</option>
@@ -352,7 +358,9 @@ useEffect(() => {
           </div>
         )}
 
-        <div className="flex flex-wrap gap-2 mb-4">
+        {!isEditingQuestion && 
+        <>
+<div className="flex flex-wrap gap-2 mb-4">
           {question.tags.map((tag) => (
             <span
               key={tag}
@@ -375,6 +383,21 @@ useEffect(() => {
             <span className="flex items-center gap-1">
               <Medal size={16} className="text-ibmblue" /> {question.skill_points} pts
             </span>
+             <div>
+              <VoteButtons
+                itemId={question.id}
+                itemType="question"
+                currentVotes={question.votes}
+                userId={question.authorId}
+                 onVoteUpdate={(newCount, newUserVote) => {
+    setQuestion((prev) => ({
+      ...prev,
+      votes: newCount,
+      userVote: newUserVote
+    }));
+  }}
+              />
+            </div>
             <span className="flex items-center gap-1">
               {question.is_solved ? (
                 <>
@@ -407,6 +430,11 @@ useEffect(() => {
             )}
           </div>
         </div>
+</>
+        }
+
+
+        
       </div>
 
       {/* Answer Section */}
