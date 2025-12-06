@@ -34,13 +34,9 @@ const MenuBar = ({ editor }) => {
       <button onClick={() => editor.chain().focus().toggleOrderedList().run()} className={buttonClass(editor.isActive('orderedList'))}  title="Numbered List">1.</button>
       <button onClick={() => editor.chain().focus().toggleBlockquote().run()} className={buttonClass(editor.isActive('blockquote'))} title="Blockquote">“”</button>
       <button onClick={() => editor.chain().focus().toggleCodeBlock().run()} className={buttonClass(editor.isActive('codeBlock'))} title="Code Block">⌘</button>
-      <button onClick={() => {
-        const url = window.prompt('Enter a URL');
-        if (url) editor.chain().focus().setLink({ href: url }).run();
-      }} className={buttonClass(editor.isActive('link'))}  title="Insert Link">🔗</button>
+    
       <button onClick={() => editor.chain().focus().undo().run()} className={buttonClass(false)} title="Undo">↺</button>
       <button onClick={() => editor.chain().focus().redo().run()} className={buttonClass(false)} title="Redo">↻</button>
-      <button onClick={() => editor.chain().focus().unsetAllMarks().run()} className={buttonClass(false)} title="Clear formatting">⨉</button>
     </div>
   );
 };
