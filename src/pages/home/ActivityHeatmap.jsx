@@ -11,6 +11,9 @@ const ActivityHeatmap = ({ data }) => {
   return (
     <section className="bg-white  mt-6 text-xs">
       <h2 className="text-lg font-semibold text-ibmblue mb-4">📆 QA Activity Heatmap</h2>
+       <p className="text-sm text-gray-600 mb-4">
+            Visual representation of your community engagement over time. Darker colors indicate more questions asked and answers provided on that day.
+          </p>
       <CalendarHeatmap
         startDate={subDays(new Date(), 300)}
         endDate={new Date()}
