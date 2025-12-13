@@ -4,6 +4,7 @@ import { Briefcase, Rocket } from "lucide-react";
 import { formatDistanceToNowStrict, parseISO, isBefore } from "date-fns";
 
 const CareerProgress = ({ user, role }) => {
+  console.log("USERROLES",role)
   const getProgressStages = (points) => {
     const stage1Max = 250;
     const stage2Max = 500; // jump straight to target
@@ -37,12 +38,12 @@ const CareerProgress = ({ user, role }) => {
 
       <div className="w-full flex items-center justify-center gap-1 mt-6">
         {[
-          {
+            {
             label: user.job_title,
             color: "#1f70c1",
             icon: <Briefcase size={24} />,
             value: circle1,
-            text: `${role.rolePoints}%`,
+            text: `${role.rolePoints} / 250`,
             range: "0–250 pts",
           },
           {
@@ -50,7 +51,7 @@ const CareerProgress = ({ user, role }) => {
             color: "#7e2a0c",
             icon: <Rocket size={24} className="text-orange-900" />,
             value: circle2,
-            text: role.rolePoints >= 250 ? `${role.rolePoints}%` : "0%",
+            text: role.rolePoints >= 250 ? `${role.rolePoints} / 500` : "0 / 250",
             range: "250–500 pts",
           },
         ].map((stage, idx) => (
