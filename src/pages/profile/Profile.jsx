@@ -372,6 +372,9 @@ const Profile = () => {
           <h2 className="text-lg font-semibold text-ibmblue flex items-center gap-2">
             <UserCheck size={18} /> Career Badges
           </h2>
+           <p className="text-sm text-gray-600 mt-1 mb-3">
+            Recognition for your contributions and achievements. Earn badges by engaging with the community, sharing knowledge, and developing your skills.
+          </p>
 
           {!badges || badges.length === 0 ? (
             <p className="text-gray-500 mt-2">No badges earned yet.</p>
@@ -402,10 +405,13 @@ const Profile = () => {
 
         {/* 🎯 CONSOLIDATED Target Roles with Skills Section */}
         <section className="mt-8">
-          <div className="flex justify-between items-center pr-10">
+          <div className="flex flex-col pr-10">
             <h2 className="text-lg font-semibold text-ibmblue flex items-center gap-2">
               <Target size={18} className="text-ibmblue" /> Target Roles & Skills
             </h2>
+             <p className="text-sm text-gray-600 mt-1">
+                Define your career aspirations and the skills needed to achieve them. Add multiple target roles with timelines and track the skills required for each position.
+              </p>
            
           </div>
 
@@ -923,5 +929,6 @@ const Profile = () => {
 };
 
 export default Profile;
+
 
 
