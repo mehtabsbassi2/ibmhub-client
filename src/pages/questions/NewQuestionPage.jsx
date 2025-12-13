@@ -150,7 +150,7 @@ const NewQuestionPage = () => {
         {/* Tags */}
         <div>
           <label className="block font-semibold text-lg mb-2">Tags *</label>
-          <p className="text-sm text-gray-500 mb-2">Add up to 5 tags (2–20 alphanumeric characters).</p>
+          <p className="text-sm text-gray-500 mb-2">Add up to 5 tags (2–20 alphanumeric characters e.g javascript, python etc).</p>
           <form onSubmit={handleTagAdd} className="flex gap-2">
             <input
               type="text"
