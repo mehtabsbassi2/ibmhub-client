@@ -31,6 +31,10 @@ const CareerProgress = ({ user, role }) => {
   return (
     <section className="bg-white p-6 rounded h-[100%]">
       <h2 className="text-lg font-bold text-ibmblue mb-4">🎯 Career Progress</h2>
+      {/* helper text */}
+        <p className="text-sm text-gray-600 mb-4">
+        Track your journey to <strong>{role.role_name}</strong>. Earn skill points by asking and answering questions. Reach 250 points to maintain your current role, then push to 500 points to unlock your target role!
+      </p>
       <p className="text-sm text-gray-600 mt-2">
         ⏳ Time Left to Reach <strong>{role.role_name}</strong>:{" "}
         <span className="font-medium text-ibmblue">{timeLeft}</span>
