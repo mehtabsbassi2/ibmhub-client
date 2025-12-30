@@ -1,4 +1,5 @@
 import axios from "axios";
+import { validateResponse } from "./apiValidator";
 
 const BASE_URL = "http://3.8.153.96:3000/api"
 //const BASE_URL = "http://localhost:3000/api"
@@ -11,29 +12,47 @@ const api = axios.create({
     }
 })
 
-export const createUser = async (payload)=>{
+// export const createUser = async (payload)=>{
+//     try {
+//         const res = await api.post("/users",payload)
+//         return res.data
+//     } catch (error) {
+//         console.log("Failed to create user",error)
+//         throw error
+//     }
+// }
+
+export const createUser = async (payload) => {
     try {
-        const res = await api.post("/users",payload)
-        return res.data
+        const res = await api.post("/users", payload)
+        const validatedData = validateResponse(res)
+        return validatedData
     } catch (error) {
-        console.log("Failed to create user",error)
+        console.error("Failed to create user", error)
+        throw error
     }
 }
- export const toogleAddmin = async (id)=>{
+
+ // FIXED CODE:
+export const toggleAdmin = async (id) => {
     try {
         const res = await api.put(`/users/toggle-admin/${id}`)
-        return res.data
+        const validatedData = validateResponse(res)
+        return validatedData
     } catch (error) {
-        console.log("Failed to toogle User account",error)
+        console.log("Failed to toggle admin status", error)
+        throw error // Also added error throwing for better handling
     }
- }
+}
+
 export const getUsers = async()=>{
     try {
         const res = await api.get("/users")
-        return res.data
+        const validatedData = validateResponse(res)
+        return validatedData
     } catch (error) {
                 console.log("Failed to load users",error)
-
+        throw error
     }
 }
 
